@@ -65,7 +65,18 @@ if __name__ == '__main__':
     ###############################################################################################################
     #                  TODO : 모델 학습을 위한 optimizer 정의                                                       #
     ###############################################################################################################
-    pass
+    
+    # define optimizer
+    if cfg.setting_no == 1:
+        optimizer = optim.Adadelta(model.parameters(), lr=cfg.lr_adadelta)
+    elif cfg.setting_no == 2:
+        optimizer = optim.Adam(model.parameters(), lr=cfg.lr_adam)
+    elif cfg.setting_no == 3:
+        optimizer = optim.Adadelta(model.parameters(), lr=cfg.lr_adadelta, weight_decay=cfg.weight_decay)
+    elif cfg.setting_no == 4:
+        optimizer = optim.Adam(model.parameters(), lr=cfg.lr_adam, weight_decay=cfg.weight_decay)
+    
+    
     ###############################################################################################################
     #                                              END OF YOUR CODE                                               #
     ###############################################################################################################
@@ -93,7 +104,22 @@ if __name__ == '__main__':
             ##############################################################################################################
             #              TODO : foward path를 진행하고 손실을 loss에 저장 후 train_loss에 더함, 모델 학습 진행              #
             ##############################################################################################################
-            pass
+                    
+            # zero gradients
+            optimizer.zero_grad()
+
+            # obtain model output
+            y_hat = model(img.view(-1, 28 * 28))
+
+            # obtain training loss
+            train_loss = criterion(y_hat, label)
+
+            # calculate gradients
+            train_loss.backward()
+
+            # optimize model
+            optimizer.step()
+
             ###############################################################################################################
             #                                              END OF YOUR CODE                                               #
             ###############################################################################################################
@@ -121,7 +147,7 @@ if __name__ == '__main__':
         print("validation dataset accuracy: %.2f" % val_acc)
         val_acc_list.append(val_acc)
         if val_acc > highest_val_acc:
-            save_path = './saved_model/setting_1/epoch_' + str(epoch + 1) + '.pth'
+            save_path = './saved_model/setting_' + str(cfg.setting_no) + '/epoch_' + str(epoch + 1) + '.pth' # change path according to setting_no
             # 위와 같이 저장 위치를 바꾸어 가며 각 setting의 epoch마다의 state를 저장할 것.
             torch.save({'epoch': epoch + 1,
                         'model_state_dict': model.state_dict()},
