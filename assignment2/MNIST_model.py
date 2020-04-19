@@ -22,6 +22,7 @@ class MNIST_model(nn.Module):
             layer = nn.Linear(input_sizes[i - 1], input_sizes[i])
             nn.init.kaiming_normal_(layer.weight, nonlinearity='relu')
             self.layers.add_module('lin_layer_' + str(i), layer)
+            self.layers.add_module('relu_layer_' + str(i), nn.ReLU())
 
         
         ###############################################################################################################
@@ -48,5 +49,5 @@ class Config():
         self.lr_adam = 0.0001
         self.lr_adadelta = 0.1
         self.epoch = 100
-        self.weight_decay = 1e-02#1e-03 # follow spreasheet value instead
+        self.weight_decay = 1e-02 #1e-03 # follow spreasheet value instead
         self.setting_no = 1 # the setting number to use (set of possible values: (1, 2, 3, 4))

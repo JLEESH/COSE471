@@ -41,9 +41,20 @@ if __name__ == "__main__":
 
     # 저장된 state 불러오기
     # added setting and best_epoch to evaluate models
-    setting = 1
-    best_epoch = 1 # change to best epoch
-    save_path = "./saved_model/setting_" + str(setting) + "/epoch_" + str(best_epoch) + ".pth"
+
+    import argparse
+    from argparse import RawTextHelpFormatter
+    desc = 'COSE471 Assignment 2'\
+        + '\nInput settings'\
+        + '\n\ne.g. python(3) MNIST_evaluation.py -s 4 -e 100 \n'
+    parser = argparse.ArgumentParser(description=desc, formatter_class=RawTextHelpFormatter)
+    parser.add_argument('-s', '--setting', default=4, type=int, choices=[1, 2, 3, 4], help='Setting to use (default: 4).')
+    parser.add_argument('-e', '--epoch', default=1, type=int, help='Epoch number (default: 1).')
+    args = parser.parse_args()
+    print('Setting: ' + str(args.setting))
+    print('Epoch: ' + str(args.epoch))
+
+    save_path = "./saved_model/setting_" + str(args.setting) + "/epoch_" + str(args.epoch) + ".pth"
     # TODO : 세팅값 마다 save_path를 바꾸어 로드
     checkpoint = torch.load(save_path)
     model.load_state_dict(checkpoint['model_state_dict'])
