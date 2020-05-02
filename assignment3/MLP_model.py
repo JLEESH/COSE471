@@ -13,7 +13,7 @@ class MLP_model(nn.Module):
         # define the various sizes of the layers
         hidden_size = 200 # required hidden layer size
         output_size = 10 # number of classes
-        input_sizes = [32 * 32 * 3, hidden_size, hidden_size, hidden_size, hidden_size, output_size]
+        input_sizes = [32 * 32 * 3, hidden_size * 2, hidden_size, hidden_size, hidden_size, hidden_size, output_size]
 
         # use a sequential container for the network
         self.layers = nn.Sequential()
@@ -23,7 +23,7 @@ class MLP_model(nn.Module):
             layer = nn.Linear(input_sizes[i - 1], input_sizes[i])
             nn.init.kaiming_normal_(layer.weight, nonlinearity='relu')
             self.layers.add_module('lin_layer_' + str(i), layer)
-            self.layers.add_module('relu_layer_' + str(i), nn.ReLU())
+            self.layers.add_module('relu_layer_' + str(i), nn.ReLU(inplace=True))
         
         ###############################################################################################################
         #                                              END OF YOUR CODE                                               #
@@ -35,6 +35,7 @@ class MLP_model(nn.Module):
         ##############################################################################################################
         
         # feed forward according to pre-defined layers
+        x = x.view(x.size(0), -1)
         x = self.layers(x)
 
         ###############################################################################################################
