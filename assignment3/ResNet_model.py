@@ -7,6 +7,7 @@ import torch.nn.functional as F
 ##############################################################################################################
 
 
+
 class IdentityPadding(nn.Module):
     def __init__(self, in_channels, out_channels, stride):
         super().__init__()
@@ -23,15 +24,17 @@ class ResidualBlock(nn.Module):
     def __init__(self, in_channels, out_channels, stride=1, down_sample=False):
         super().__init__()
 
+
+        ##### x1 TO x6 #####
         self.conv1 = nn.Conv2d(in_channels, out_channels,
-                               kernel_size=X1, stride=X2,
-                               padding=X3, bias=False)
+                               kernel_size=3, stride=1,
+                               padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU(inplace=True)
 
         self.conv2 = nn.Conv2d(out_channels, out_channels,
-                               kernel_size=X4, stride=X5,
-                               padding=X6, bias=False)
+                               kernel_size=3, stride=stride,
+                               padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(out_channels)
         self.stride = stride
         if down_sample:
@@ -50,7 +53,7 @@ class ResidualBlock(nn.Module):
 
         if self.down_sample is not None:
             shortcut = self.down_sample(shortcut)
-
+        
         x += shortcut
         x = self.relu(x)
         return x
@@ -60,10 +63,12 @@ class ResNet(nn.Module):
 
     def __init__(self, num_layers, block, num_classes=10):
         super().__init__()
+
+        ##### X7 TO X10 #####
         # input img : [3, 32, 32]
         self.num_layers = num_layers
-        self.conv1 = nn.Conv2d(in_channels=X7, out_channels=X8,
-                               kernel_size=X9, padding=X10, bias=False)
+        self.conv1 = nn.Conv2d(in_channels=3, out_channels=16,
+                               kernel_size=3, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(16)
         self.relu = nn.ReLU(inplace=True)
 

@@ -103,7 +103,9 @@ if __name__ == '__main__':
         ###############################################################################################################
         #                  TODO : 모델 학습을 위한 optimizer 정의                                                       #
         ###############################################################################################################
-        pass
+        optimizer = optim.SGD(model.parameters(), lr=cfg.lr, momentum=cfg.momentum, weight_decay=cfg.weight_decay)
+        decay_epoch = [32000, 48000]
+        step_lr_scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=decay_epoch, gamma=0.1)
         ###############################################################################################################
         #                                              END OF YOUR CODE                                               #
         ###############################################################################################################
@@ -112,7 +114,9 @@ if __name__ == '__main__':
         ###############################################################################################################
         #                  TODO : 모델 학습을 위한 optimizer 정의                                                       #
         ###############################################################################################################
-        pass
+        optimizer = optim.SGD(model.parameters(), lr=cfg.lr, momentum=cfg.momentum, weight_decay=cfg.weight_decay)
+        decay_epoch = [32000, 48000]
+        step_lr_scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=decay_epoch, gamma=0.1)
         ###############################################################################################################
         #                                              END OF YOUR CODE                                               #
         ###############################################################################################################
@@ -150,7 +154,7 @@ if __name__ == '__main__':
             train_loss += loss
 
             train_batch_cnt += 1
-            quit()
+            #quit()
             if global_steps >= 64000:
                 print("Training finished.")
                 break
