@@ -1,0 +1,1 @@
+Note that the License only applies to parts that are written by the author.
