@@ -98,7 +98,7 @@ class Word2Vec(nn.Module):
 
     Raises ValueError if an invalid architecture name is provided (i.e. other than "skipgram" or "cbow").
     '''
-    def __init__(self, architecture="skipgram", dimension=100, max_context_dist=4, learning_rate=5e-3,
+    def __init__(self, architecture="skipgram", dimension=100, max_context_dist=4, learning_rate=1e-3,
                     pickle_filename=None, load_model=False, model_filename=None, mode="nn"):
 
         # not used in tensor mode
@@ -330,7 +330,9 @@ class Word2Vec(nn.Module):
 
         loss_list = []
         for i in range(0, iteration + 1):
-
+        #i = 0
+        #while True:
+        #    i = i + 1
             # obtain random context
             center_index = random.randint(0, self.corpus_size - 1)
             context_indices = self.getContextIndices(center_index)
@@ -338,8 +340,8 @@ class Word2Vec(nn.Module):
             
             ################# TRAIN ON PARTIAL CORPUS ####################
             # replace with a not-so-random context (debug/partial)
-            center_index = center_index % 1000
-            context_indices = self.getContextIndices(center_index)
+            #center_index = center_index % 100
+            #context_indices = self.getContextIndices(center_index)
             ##############################################################
 
 
@@ -375,6 +377,22 @@ class Word2Vec(nn.Module):
                 print("iteration:", i)
                 print("loss:", loss_avg)
                 loss_list = []
+            
+            if i % 10000 == 0:
+                # TODO: streamline weights-saving
+                # save weights to file 
+                if output_filename is not None:
+                    print()
+                    print("saving model to file...")
+
+                    if save_type == "weights":
+                        W_dict = {"W_emb" : self.W_emb, "W_out" : self.W_out}
+                        torch.save(W_dict, output_filename)
+                    elif save_type == "state_dict":
+                        torch.save(self.state_dict(), output_filename)
+
+                    print("model saved to file successfully.")
+                    print()
 
 
         # TODO: streamline weights-saving
@@ -409,67 +427,15 @@ class Word2Vec(nn.Module):
             output = torch.mv(self.W_out, center_vector)
             softmax = F.softmax(output, 0)
 
-
-            ################## DEBUG ##################
-            if self.debug == True and self.verbose == True:
-                print()
-                print()
-                print("##################### NEXT ITERATION #####################")
-                print()
-                print("center word:", self.ind2word[center_emb_index])
-                print("context words:", [self.corpus[index] for index in context_indices])
-                context_outputs =output[context_indices]
-                nll = -1 * F.log_softmax(output, 0)[context_indices]
-                context_softmax = F.softmax(output, 0)[context_indices]
-                print("nll:", nll)
-                print("cop:", context_outputs)
-                print("csf:", context_softmax)
-
-                lsfsum = F.log_softmax(output, 0)[context_indices].sum(0)
-                print(lsfsum)
-            ############## END DEBUG ##################
-
-
             # calculate loss and gradients
             softmax[context_emb_indices] -= 1
             loss = -1 * F.log_softmax(output, 0)[context_emb_indices].sum(0)
             grad_emb = torch.mv(self.W_out.t(), softmax)
             grad_out = torch.ger(center_vector, softmax).t()
 
-
-            ################## DEBUG ##################
-            if self.debug == True and self.verbose == True:
-                print()
-                #print(output.size(), loss.size(), grad_emb.size(), grad_out.size())
-                print("W_emb_e size:", self.W_emb[center_emb_index].size())
-                print("grad_emb size:", grad_emb.size())
-                print("W_emb_e:", self.W_emb[center_emb_index][:5])
-                print("grad_emb:", grad_emb[:5])
-                print("W_out size:", self.W_out.size())
-                print("grad_out size:", grad_out.size())
-                #print("W_out:", self.W_out[:3][:3])
-                #print("grad_out:", grad_out[:3][:3])
-            ############## END DEBUG ##################
-
-
             # update weights
             self.W_emb[center_emb_index] -= self.learning_rate * grad_emb
             self.W_out -= self.learning_rate * grad_out
-
-
-            ################## DEBUG ##################
-            if self.debug == True and self.verbose == True:
-                print()
-                print("after adjusting gradient...")
-                print("W_emb_e size:", self.W_emb[center_emb_index].size())
-                print("grad_emb size:", grad_emb.size())
-                print("W_emb_e:", self.W_emb[center_emb_index][:5])
-                print("grad_emb:", grad_emb[:5])
-                print("W_out size:", self.W_out.size())
-                print("grad_out size:", grad_out.size())
-                #print("W_out:", self.W_out[:3][:3])
-                #print("grad_out:", grad_out[:3][:3])
-            ############## END DEBUG ##################
 
             return loss.item()
         
@@ -485,7 +451,9 @@ class Word2Vec(nn.Module):
             context_emb_indices = [self.word2ind[self.corpus[index]] for index in context_indices]
             
             # feed forward
-            context_vector = [self.W_emb[index] for index in context_indices].sum(0)
+            context_vector = torch.zeros_like(self.W_emb[center_emb_index])
+            for index in context_emb_indices:
+                context_vector += self.W_emb[index]
             output = torch.mv(self.W_out, context_vector)
             softmax = F.softmax(output, 0)
 
@@ -498,6 +466,8 @@ class Word2Vec(nn.Module):
             # update weights
             self.W_emb[context_emb_indices] -= self.learning_rate * grad_emb
             self.W_out -= self.learning_rate * grad_out
+
+            return loss.item()
 
 
 
@@ -554,10 +524,11 @@ def main():
     
     # create model
     # NOTE: the text8 file must be in the same directory
-    model = Word2Vec("skipgram", mode="tensor", load_model=True, model_filename="w2v_model_with_embeddings", pickle_filename="w2v_vars")#pickle_filename=None) # to make it explicit that we are not loading a pickle file
+    model = Word2Vec("skipgram", mode="tensor", learning_rate=1e-3, load_model=True, model_filename="w2v_model_with_embeddings_2", pickle_filename="w2v_vars")#pickle_filename=None) # to make it explicit that we are not loading a pickle file
+    #model = Word2Vec("cbow", mode="tensor", learning_rate=1e-3, load_model=True, model_filename="w2v_model_with_embeddings", pickle_filename="w2v_vars")#pickle_filename=None) # to make it explicit that we are not loading a pickle file
     
     # train model (takes a long time)
-    model.train(3000, output_filename="w2v_model_with_embeddings", save_type="weights", debug=False, verbose=False)
+    model.train(50000, output_filename="w2v_model_with_embeddings_2", save_type="weights", debug=False, verbose=False)
 
     ## make predictions
     #model.predict("hello")
@@ -572,13 +543,13 @@ def main():
     '''
     
     # debug: find words similar to a certain set of words
-    for i in range(20):
-        word = model.corpus[i + 150]
+    for i in range(50):
+        word = model.corpus[i]
         word_list = model.find_similar(word, 5)
         print("words most similar to:", word)
         print(word_list)
         print()
-    print(model.corpus[100:200])
+    print(model.corpus[:100])
 
     print()
     # perform analogical reasoning task
