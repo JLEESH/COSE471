@@ -8,10 +8,12 @@ import random
 import pickle
 
 
+
 '''
 process_text(filename, pickle_filename)
 
-Preprocess corpus given in filename.
+
+Preprocesses corpus given in filename to generate and save certain variables into pickle_filename.
 '''
 def process_text(filename, pickle_filename):
     ## dependencies
@@ -87,6 +89,7 @@ def process_text(filename, pickle_filename):
         pickle.dump(ind2word, f)
 
 
+
 class Word2Vec(nn.Module):
 
     '''
@@ -99,7 +102,7 @@ class Word2Vec(nn.Module):
     Raises ValueError if an invalid architecture name is provided (i.e. other than "skipgram" or "cbow").
     '''
     def __init__(self, architecture="skipgram", dimension=100, max_context_dist=4, learning_rate=1e-3,
-                    pickle_filename=None, load_model=False, model_filename=None, mode="nn"):
+                    pickle_filename=None, load_model=False, model_filename=None, mode="tensor"):
 
         # not used in tensor mode
         super(Word2Vec, self).__init__()
@@ -132,11 +135,14 @@ class Word2Vec(nn.Module):
         # TODO: streamline weight init.
         if load_model:
             if model_filename is None:
-                raise ValueError("model_filename not provided")
+                raise ValueError("model_filename not provided.")
+
             if mode == "nn":
                 self.load_model(model_filename, load_type="state_dict")
             elif mode == "tensor":
                 self.load_model(model_filename, load_type="weights")
+            else:
+                raise ValueError("load_type not recognised.")
         else:
             if mode == "nn":
                 self.embedding = nn.Embedding(self.vocabulary_size, self.dimension)
@@ -144,13 +150,18 @@ class Word2Vec(nn.Module):
                 indices = torch.tensor([i for i in range(self.vocabulary_size)])
                 self.W_emb = self.embedding(indices)
             
-            if mode == "tensor":
+            elif mode == "tensor":
                 self.W_emb = torch.randn(self.vocabulary_size, self.dimension) / dimension**0.5
                 self.W_out = torch.randn(self.vocabulary_size, self.dimension) / dimension**0.5
+            
+            else:
+                raise ValueError("load_type not recognised.")
         
+
         # define optimiser if in nn mode
         if mode == "nn":
             self.optimizer = optim.Adam(self.parameters(), lr=0.001, weight_decay=0)
+
 
 
     '''
@@ -170,6 +181,7 @@ class Word2Vec(nn.Module):
             raise ValueError("Invalid load_type in load_model().")
 
 
+
     '''
     load_w2v_vars(filename)
 
@@ -186,6 +198,7 @@ class Word2Vec(nn.Module):
             self.ind2word = pickle.load(f)
 
 
+
     '''
     _process_corpus(self, filename)
 
@@ -199,6 +212,7 @@ class Word2Vec(nn.Module):
         self.load_w2v_vars(p_filename)
         self.corpus_size = len(self.corpus)
         self.vocabulary_size = len(self.occurrence_dict)
+
 
 
     '''
@@ -222,6 +236,7 @@ class Word2Vec(nn.Module):
         return context_indices
 
 
+
     '''
     forward(center_index, context_indices)
 
@@ -231,6 +246,7 @@ class Word2Vec(nn.Module):
     '''
     def forward(self, center_index, context_indices):
         return self.func(center_index, context_indices)
+
 
 
     '''
@@ -243,6 +259,7 @@ class Word2Vec(nn.Module):
     def predict(self, word):
         raise NotImplementedError("predict() not implemented.")
     
+
 
     '''
     find_similar(word, n_output=5)
@@ -292,7 +309,7 @@ class Word2Vec(nn.Module):
     Returns a list of the 5 most similar words along with their similarity values.
     '''
     def deduce(self, word_original, word_root, word_question):
-        # TODO: use Pytorch instead
+        # TODO: use Pytorch cosine similarity instead
 
         W_emb = self.W_emb
         word2ind = self.word2ind
@@ -309,13 +326,14 @@ class Word2Vec(nn.Module):
         similarity = (W_emb_normalised * word_answer).sum(1)
 
         # find 5 words most similar to the representation
-        values, indices = similarity.topk(5)
+        values, indices = similarity.topk(10)
 
         word_list = []
         for index, value in zip(indices, values):
             word_list.append((self.ind2word[index.item()], value.item()))
 
         return word_list
+
 
 
     '''
@@ -329,10 +347,20 @@ class Word2Vec(nn.Module):
         self.verbose = verbose
 
         loss_list = []
-        for i in range(0, iteration + 1):
-        #i = 0
-        #while True:
-        #    i = i + 1
+
+        # begin training
+        #for i in range(0, iteration + 1):
+
+
+        ############## UNLIMITED TRAINING WORKS #################
+        # keep training until the process is killed
+        # make sure to save the weights as no additional output
+        # will be provided after the process is killed
+        i = 0
+        while True:
+            i = i + 1
+        #########################################################
+
             # obtain random context
             center_index = random.randint(0, self.corpus_size - 1)
             context_indices = self.getContextIndices(center_index)
@@ -351,7 +379,7 @@ class Word2Vec(nn.Module):
 
 
             ############ DEBUG: test getContextIndices() #############
-            if debug:
+            if self.debug and i % 100 == 0:
                 # set breakpoint here
                 center = self.corpus[center_index]
                 context = [self.corpus[index] for index in context_indices]
@@ -372,15 +400,16 @@ class Word2Vec(nn.Module):
 
 
             # average loss calculation
-            if i % 200 == 0:
+            if i % 500 == 0:
                 loss_avg = sum(loss_list) / len(loss_list)
                 print("iteration:", i)
                 print("loss:", loss_avg)
                 loss_list = []
             
-            if i % 10000 == 0:
-                # TODO: streamline weights-saving
-                # save weights to file 
+
+            # TODO: streamline weights-saving
+            # save weights to file automatically after a certain number of iterations
+            if i % 5000 == 0:
                 if output_filename is not None:
                     print()
                     print("saving model to file...")
@@ -396,7 +425,7 @@ class Word2Vec(nn.Module):
 
 
         # TODO: streamline weights-saving
-        # save weights to file 
+        # save weights to file after training is complete
         if output_filename is not None:
             print()
             print("saving model to file...")
@@ -412,6 +441,12 @@ class Word2Vec(nn.Module):
 
     
 
+    '''
+    skipgram(center_index, context_indices)
+
+
+    Performs skipgram training. Returns loss as an integer.
+    '''
     def skipgram(self, center_index, context_indices):
         if self.mode == "nn":
             raise NotImplementedError("skipgram() in nn mode not implemented.")
@@ -429,7 +464,7 @@ class Word2Vec(nn.Module):
 
             # calculate loss and gradients
             softmax[context_emb_indices] -= 1
-            loss = -1 * F.log_softmax(output, 0)[context_emb_indices].sum(0)
+            loss = -1 * (F.log_softmax(output, 0)[context_emb_indices]).sum(0)
             grad_emb = torch.mv(self.W_out.t(), softmax)
             grad_out = torch.ger(center_vector, softmax).t()
 
@@ -438,8 +473,15 @@ class Word2Vec(nn.Module):
             self.W_out -= self.learning_rate * grad_out
 
             return loss.item()
-        
+    
 
+
+    '''
+    cbow(center_index, context_indices)
+
+
+    Performs CBOW training. Returns loss as an integer.
+    '''
     def cbow(self, center_index, context_indices):
         if self.mode == "nn":
             raise NotImplementedError("cbow() in nn mode not implemented.")
@@ -471,43 +513,6 @@ class Word2Vec(nn.Module):
 
 
 
-'''
-DEBUG
-
-Used for debugging purposes.
-'''
-def debug():
-
-    # try invalid names
-    try:
-        model = Word2Vec("hello")
-    except:
-        print("exception")
-    #model = Word2Vec("hi")
-    
-    # create model
-    model = Word2Vec("cbow", pickle_filename="w2v_vars")
-    print(model.func, model.learning_rate)
-
-    # load model
-    #print("loading model...")
-    #model.load_model("test_w")
-    #print("model loaded successfully.")
-
-    # train model
-    print("training model...")
-    model.train(10, "test_w")
-    #model.train(100)
-    print("training complete.")
-
-    # try loading w2v_vars
-    model.load_w2v_vars("w2v_vars")
-
-    # create model from saved model
-    model = Word2Vec("cbow", pickle_filename="w2v_vars", load_model=True, model_filename="test_w")
-    model.train(10, debug=True, verbose=True)
-
-
 def main():
     # TODO: clean up code for submission/out-of-the-box testing
 
@@ -521,46 +526,103 @@ def main():
                 "walking", "walked", "swimming", "swam", 
                 "mouse", "mice", "dollar", "dollars", 
                 "work", "works", "speak", "speaks"]
+
+    # define some "easier" test questions with more common words
+    qn_words_test = ["is", "was", "has", "had",
+                "is", "are", "has", "have",
+                "were", "was", "had", "had",
+                "were", "was", "have", "has",
+                "have", "has", "are", "is",
+                "has", "have", "is", "are",
+                "he", "she", "his", "hers",
+                "one", "two", "first", "second"]
     
+
     # create model
     # NOTE: the text8 file must be in the same directory
-    model = Word2Vec("skipgram", mode="tensor", learning_rate=1e-3, load_model=True, model_filename="w2v_model_with_embeddings_2", pickle_filename="w2v_vars")#pickle_filename=None) # to make it explicit that we are not loading a pickle file
-    #model = Word2Vec("cbow", mode="tensor", learning_rate=1e-3, load_model=True, model_filename="w2v_model_with_embeddings", pickle_filename="w2v_vars")#pickle_filename=None) # to make it explicit that we are not loading a pickle file
+
+    # NOTE: nn mode training is not supported.
+    # Consequently, save_type should also be set to "weights" and not "state_dict".
+
+    #model = Word2Vec("skipgram", mode="tensor", learning_rate=5e-4, load_model=True, model_filename="w2v_model_with_embeddings_2", pickle_filename="w2v_vars")#pickle_filename=None) # to make it explicit that we are not loading a pickle file
+    model = Word2Vec("cbow", mode="tensor", learning_rate=5e-3, load_model=True, model_filename="w2v_model_with_embeddings", pickle_filename="w2v_vars")#pickle_filename=None) # to make it explicit that we are not loading a pickle file
     
     # train model (takes a long time)
-    model.train(50000, output_filename="w2v_model_with_embeddings_2", save_type="weights", debug=False, verbose=False)
+    #model.train(10, output_filename="w2v_model_with_embeddings", save_type="weights", debug=False, verbose=False)
 
+    # find similar words
+    if False:
+        for word in qn_words:
+            word_list = model.find_similar(word, 5)
+            print("words most similar to:", word)
+            print(word_list)
+            print()
+        
+        # perform analogical reasoning task
+        for i in range(0, 9):
+            answer = model.deduce(qn_words[i * 4], qn_words[i * 4 + 1], qn_words[i * 4 + 2])
+            print("question:", qn_words[i * 4], "-", qn_words[i * 4 + 1], "+", qn_words[i * 4 + 2])
+            print("answer:", answer) # TODO: better format for output
+            print()
+    
+    
     ## make predictions
     #model.predict("hello")
 
-    # find similar words
     '''
-    for word in qn_words:
-        word_list = model.find_similar(word, 5)
-        print("words most similar to:", word)
-        print(word_list)
-        print()
-    '''
-    
-    # debug: find words similar to a certain set of words
-    for i in range(50):
-        word = model.corpus[i]
-        word_list = model.find_similar(word, 5)
-        print("words most similar to:", word)
-        print(word_list)
-        print()
-    print(model.corpus[:100])
+    ###### DEBUG #####
 
-    print()
-    # perform analogical reasoning task
+    The following section produces output for debugging.
+    TODO: use commandline arguments to streamline the debugging process?
     '''
-    for i in range(0, 9):
-        answer = model.deduce(qn_words[i * 4], qn_words[i * 4 + 1], qn_words[i * 4 + 2])
-        print("question:", qn_words[i * 4], "-", qn_words[i * 4 + 1], "+", qn_words[i * 4 + 2])
-        print("answer:", answer) # TODO: better format for output
+
+    if True:
+
+        # debug: find words similar to a certain set of words
+        for i in range(20):
+            
+            # select words by frequency or by position in corpus
+            word = model.ind2word[i]
+            #word = model.corpus[i]
+
+            word_list = model.find_similar(word, 15) # note: word_list contains tuples
+            print("words most similar to:", word)
+            print(word_list)
+            print()
+        #print(model.corpus[:100]) # optionally print part of the corpus for reference
+
+
+        # perform analogical reasoning task on easier questions.
+        for i in range(0, 5):
+            answer = model.deduce(qn_words_test[i * 4], qn_words_test[i * 4 + 1], qn_words_test[i * 4 + 2])
+            print("question:", qn_words_test[i * 4], "-", qn_words_test[i * 4 + 1], "+", qn_words_test[i * 4 + 2])
+            print("answer:", answer) # TODO: better format for output
+            print()
+
+
+    # analyse the proportion of the n most frequent words
+    # note that the most frequent 50 words take up more than 40% of the corpus,
+    # which is why subsampling/removal of common words may be strongly required
+    # for proper training.
+    if True:
         print()
-    '''
+        for n in [10, 50, 100, 300, 500, 2000, 3000]:
+            print("The top", n, "most frequent words: ")
+            print("occurrence count:\t", sum([model.occurrence_dict[model.ind2word[i]] for i in range(0, n)]))
+            print("length of corpus:\t", len(model.corpus))
+            print("percentage:\t\t %.3f" % (sum([model.occurrence_dict[model.ind2word[i]] for i in range(0, n)]) / len(model.corpus) * 100), "%")
+            print()
+
+        print("total vocabulary size:", len(model.occurrence_dict))
+        print()
+    
+
+    # take a look at the word embeddings
+    if True:
+        for i in range(20):
+            print(model.ind2word[i], "\t:\t", model.W_emb[i, :5])
+
+
 
 if __name__ == '__main__':
-    #debug()
     main()
