@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from collections import Counter
 import random
-#import argparse
+import argparse
 import pickle
 
 
@@ -337,40 +337,41 @@ class Word2Vec(nn.Module):
 
 
     '''
-    train(iteration=50000, output_filename=None, debug=False, verbose=False, save_type="weights")
+    train(iteration=50000, output_filename=None, debug=False, verbose=False, train_partial=False, save_type="weights")
 
 
     Trains the model according to the given parameters.
     '''
-    def train(self, iteration=50000, output_filename=None, debug=False, verbose=False, save_type="weights"):
+    def train(self, iteration=50000, output_filename=None, debug=False, verbose=False, train_partial=False, save_type="weights"):
+        
+        # check if the user wants to debug
         self.debug = debug
         self.verbose = verbose
+        self.train_partial = train_partial
 
+        # check if the model should keep training
+        inf_train = False
+        if iteration < 0:
+            inf_train = True
+
+        # initialise loss list
         loss_list = []
 
         # begin training
-        #for i in range(0, iteration + 1):
-
-
-        ############## UNLIMITED TRAINING WORKS #################
-        # keep training until the process is killed
-        # make sure to save the weights as no additional output
-        # will be provided after the process is killed
         i = 0
-        while True:
-            i = i + 1
-        #########################################################
+        while i < iteration or inf_train:
+            i += 1
 
             # obtain random context
             center_index = random.randint(0, self.corpus_size - 1)
+
+            # check if the user wants to train on a partial corpus
+            if train_partial:
+                center_index = center_index % 100
+
+            # obtain context_indices
             context_indices = self.getContextIndices(center_index)
 
-            
-            ################# TRAIN ON PARTIAL CORPUS ####################
-            # replace with a not-so-random context (debug/partial)
-            #center_index = center_index % 100
-            #context_indices = self.getContextIndices(center_index)
-            ##############################################################
 
 
             # train using self.func (tensor mode; nn mode not implemented)
@@ -379,7 +380,7 @@ class Word2Vec(nn.Module):
 
 
             ############ DEBUG: test getContextIndices() #############
-            if self.debug and i % 100 == 0:
+            if self.debug:
                 # set breakpoint here
                 center = self.corpus[center_index]
                 context = [self.corpus[index] for index in context_indices]
@@ -516,6 +517,29 @@ class Word2Vec(nn.Module):
 def main():
     # TODO: clean up code for submission/out-of-the-box testing
 
+    # parse commandline arguments
+    parser = argparse.ArgumentParser("word2vec")
+    parser.add_argument("-s", "--skip-task", dest="task", default=True, action="store_false")
+    parser.add_argument("-n", "--no-train", dest="train", default=True, action="store_false")
+    parser.add_argument("-d", "--debug", dest="debug", default=False, action="store_true")
+    parser.add_argument("-p", "--train-partial", dest="train_partial", default=False, action="store_true")
+    parser.add_argument("-i", "--inf-train", dest="inf_train", default=False, action="store_true")
+    parser.add_argument("-l", "--load-model", dest="load_model", default=False, action="store_true")
+    parser.add_argument("-r", "--learning-rate", dest="learning_rate", default=5e-3, metavar="lr", type=float)
+    parser.add_argument("-e", "--iterations", dest="iterations", default=10000, metavar="it", type=int)
+
+    args = parser.parse_args()
+    perform_task = args.task
+    perform_training = args.train
+    debug = args.debug
+    verbose = args.debug # assume verbose is true when debug is true
+    train_partial = args.train_partial
+    inf_train = args.inf_train
+    load_model = args.load_model
+    learning_rate = args.learning_rate
+    iterations = args.iterations
+
+
     # define question words
     qn_words = ["brother", "sister", "grandson", "granddaughter",
                 "apparent", "apparently", "rapid", "rapidly",
@@ -529,29 +553,40 @@ def main():
 
     # define some "easier" test questions with more common words
     qn_words_test = ["is", "was", "has", "had",
-                "is", "are", "has", "have",
-                "were", "was", "had", "had",
-                "were", "was", "have", "has",
-                "have", "has", "are", "is",
-                "has", "have", "is", "are",
+                #"is", "are", "has", "have",
+                "is", "are", "was", "were",
+                #"were", "was", "had", "had",
+                #"were", "was", "have", "has",
+                #"have", "has", "are", "is",
+                #"has", "have", "is", "are",
                 "he", "she", "his", "hers",
+                #"their", "they", "his", "he",
+                #"their", "they", "her", "she",
+                "day", "days", "year", "years",
+                "days", "day", "books", "book",
+                "french", "france", "german", "germany",
+                "years", "year", "day", "days",
                 "one", "two", "first", "second"]
     
 
     # create model
-    # NOTE: the text8 file must be in the same directory
+    # NOTE: the text8 file must be in the same directory to generate the pickle file.
 
     # NOTE: nn mode training is not supported.
     # Consequently, save_type should also be set to "weights" and not "state_dict".
-
+    
     #model = Word2Vec("skipgram", mode="tensor", learning_rate=5e-4, load_model=True, model_filename="w2v_model_with_embeddings_2", pickle_filename="w2v_vars")#pickle_filename=None) # to make it explicit that we are not loading a pickle file
-    model = Word2Vec("cbow", mode="tensor", learning_rate=5e-3, load_model=True, model_filename="w2v_model_with_embeddings", pickle_filename="w2v_vars")#pickle_filename=None) # to make it explicit that we are not loading a pickle file
+    model = Word2Vec("cbow", mode="tensor", learning_rate=learning_rate, load_model=load_model, model_filename="w2v_model_with_embeddings", pickle_filename="w2v_vars")#pickle_filename=None) # to make it explicit that we are not loading a pickle file
     
     # train model (takes a long time)
-    #model.train(10, output_filename="w2v_model_with_embeddings", save_type="weights", debug=False, verbose=False)
+    if perform_training:
+        if inf_train:
+            model.train(-1, output_filename="w2v_model_with_embeddings", save_type="weights", debug=debug, verbose=verbose, train_partial=train_partial)
+        else:
+            model.train(iterations, output_filename="w2v_model_with_embeddings", save_type="weights", debug=debug, verbose=verbose, train_partial=train_partial)
 
     # find similar words
-    if False:
+    if perform_task:
         for word in qn_words:
             word_list = model.find_similar(word, 5)
             print("words most similar to:", word)
@@ -569,6 +604,7 @@ def main():
     ## make predictions
     #model.predict("hello")
 
+
     '''
     ###### DEBUG #####
 
@@ -576,13 +612,13 @@ def main():
     TODO: use commandline arguments to streamline the debugging process?
     '''
 
-    if True:
+    if debug:# and False:
 
         # debug: find words similar to a certain set of words
-        for i in range(20):
+        for i in range(50):
             
             # select words by frequency or by position in corpus
-            word = model.ind2word[i]
+            word = model.ind2word[i+150]
             #word = model.corpus[i]
 
             word_list = model.find_similar(word, 15) # note: word_list contains tuples
@@ -604,7 +640,7 @@ def main():
     # note that the most frequent 50 words take up more than 40% of the corpus,
     # which is why subsampling/removal of common words may be strongly required
     # for proper training.
-    if True:
+    if debug:# and False:
         print()
         for n in [10, 50, 100, 300, 500, 2000, 3000]:
             print("The top", n, "most frequent words: ")
@@ -618,9 +654,14 @@ def main():
     
 
     # take a look at the word embeddings
-    if True:
+    if debug and False:
         for i in range(20):
             print(model.ind2word[i], "\t:\t", model.W_emb[i, :5])
+    
+
+    # misc. debug
+    if debug and False:
+        print("learning rate:", learning_rate)
 
 
 
