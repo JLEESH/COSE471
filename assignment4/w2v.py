@@ -77,6 +77,7 @@ def process_text(filename, pickle_filename):
 
     for i in range(len(qn_words)):
         print(qn_words_sort[i], "appears", corpus_count_processed[qn_words_sort[i]], "times.")
+    print()
 
     # note that words such as "impossibly" and "luckiest" are extremely rare in the corpus, 
     # albeit not removed with a threshold of 4.
@@ -372,8 +373,6 @@ class Word2Vec(nn.Module):
             # obtain context_indices
             context_indices = self.getContextIndices(center_index)
 
-
-
             # train using self.func (tensor mode; nn mode not implemented)
             loss = self(center_index, context_indices)
             loss_list.append(loss)
@@ -381,22 +380,11 @@ class Word2Vec(nn.Module):
 
             ############ DEBUG: test getContextIndices() #############
             if self.debug and False:
-                # set breakpoint here
                 center = self.corpus[center_index]
                 context = [self.corpus[index] for index in context_indices]
                 if verbose:
                     print(center)
                     print(context)
-
-                ## set breakpoint here
-                #center_index = 2 #len(self.corpus) - 1
-                #context_indices = self.getContextIndices(center_index)
-                
-                #center = self.corpus[center_index]
-                #context = [self.corpus[index] for index in context_indices]
-                #if verbose:
-                #    print(center)
-                #    print(context)
             ######################## END DEBUG ########################
 
 
@@ -576,11 +564,14 @@ def main():
 
     # NOTE: nn mode training is not supported.
     # Consequently, save_type should also be set to "weights" and not "state_dict".
-    
-    #model = Word2Vec("skipgram", mode="tensor", learning_rate=5e-4, load_model=True, model_filename="w2v_model_with_embeddings_2", pickle_filename="w2v_vars")#pickle_filename=None) # to make it explicit that we are not loading a pickle file
-    model = Word2Vec("cbow", mode="tensor", learning_rate=learning_rate, load_model=load_model, model_filename="w2v_model_with_embeddings", pickle_filename="w2v_vars")#pickle_filename=None) # to make it explicit that we are not loading a pickle file
+
+    if load_model:
+        model = Word2Vec("cbow", mode="tensor", learning_rate=learning_rate, load_model=load_model, model_filename="w2v_model_with_embeddings", pickle_filename="w2v_vars")
+    else:
+        model = Word2Vec("cbow", mode="tensor", learning_rate=learning_rate, load_model=load_model, model_filename="w2v_model_with_embeddings", pickle_filename=None) # to make it explicit that we are not loading a pickle file
     
     # train model (takes a long time)
+    print("commencing trainig...")
     if perform_training:
         if inf_train:
             model.train(-1, output_filename="w2v_model_with_embeddings", save_type="weights", debug=debug, verbose=verbose, train_partial=train_partial)
