@@ -543,19 +543,15 @@ def main():
 
     # define some "easier" test questions with more common words
     qn_words_test = ["is", "was", "has", "had",
-                #"is", "are", "has", "have",
+                "is", "are", "has", "have",
                 "is", "are", "was", "were",
-                #"were", "was", "had", "had",
                 #"were", "was", "have", "has",
-                #"have", "has", "are", "is",
-                #"has", "have", "is", "are",
                 "he", "she", "his", "hers",
                 #"their", "they", "his", "he",
                 #"their", "they", "her", "she",
                 "day", "days", "year", "years",
                 "days", "day", "books", "book",
                 "french", "france", "german", "germany",
-                "years", "year", "day", "days",
                 "one", "two", "first", "second"]
     
 
@@ -571,8 +567,8 @@ def main():
         model = Word2Vec("cbow", mode="tensor", learning_rate=learning_rate, load_model=load_model, model_filename="w2v_model_with_embeddings", pickle_filename=None) # to make it explicit that we are not loading a pickle file
     
     # train model (takes a long time)
-    print("commencing trainig...")
     if perform_training:
+        print("commencing trainig...")
         if inf_train:
             model.train(-1, output_filename="w2v_model_with_embeddings", save_type="weights", debug=debug, verbose=verbose, train_partial=train_partial)
         else:
@@ -608,10 +604,10 @@ def main():
     if debug:# and False:
 
         # debug: find words similar to a certain set of words
-        for i in range(50):
+        for i in range(20):
             
             # select words by frequency or by position in corpus
-            word = model.ind2word[i+150]
+            word = model.ind2word[i]
             #word = model.corpus[i]
 
             word_list = model.find_similar(word, 15) # note: word_list contains tuples
