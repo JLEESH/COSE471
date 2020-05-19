@@ -380,7 +380,7 @@ class Word2Vec(nn.Module):
 
 
             ############ DEBUG: test getContextIndices() #############
-            if self.debug:
+            if self.debug and False:
                 # set breakpoint here
                 center = self.corpus[center_index]
                 context = [self.corpus[index] for index in context_indices]
@@ -464,14 +464,16 @@ class Word2Vec(nn.Module):
             softmax = F.softmax(output, 0)
 
             # calculate loss and gradients
-            softmax[context_emb_indices] -= 1
-            loss = -1 * (F.log_softmax(output, 0)[context_emb_indices]).sum(0)
-            grad_emb = torch.mv(self.W_out.t(), softmax)
-            grad_out = torch.ger(center_vector, softmax).t()
+            for index in context_emb_indices:
+                g = softmax.clone()
+                g[index] -= 1
+                loss = -1 * F.log_softmax(output, 0)[index]
+                grad_emb = torch.mv(self.W_out.t(), g)
+                grad_out = torch.ger(center_vector, g).t()
 
-            # update weights
-            self.W_emb[center_emb_index] -= self.learning_rate * grad_emb
-            self.W_out -= self.learning_rate * grad_out
+                # update weights
+                self.W_emb[center_emb_index] -= self.learning_rate * grad_emb
+                self.W_out -= self.learning_rate * grad_out
 
             return loss.item()
     
