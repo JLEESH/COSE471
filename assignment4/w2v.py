@@ -544,9 +544,9 @@ def main():
     # define some "easier" test questions with more common words
     qn_words_test = ["is", "was", "has", "had",
                 "is", "are", "has", "have",
-                "is", "are", "was", "were",
+                "is", "was", "are", "were",
                 #"were", "was", "have", "has",
-                "he", "she", "his", "hers",
+                "he", "his", "she", "hers",
                 #"their", "they", "his", "he",
                 #"their", "they", "her", "she",
                 "day", "days", "year", "years",
@@ -568,26 +568,43 @@ def main():
     
     # train model (takes a long time)
     if perform_training:
-        print("commencing trainig...")
+        print("commencing training...")
         if inf_train:
             model.train(-1, output_filename="w2v_model_with_embeddings", save_type="weights", debug=debug, verbose=verbose, train_partial=train_partial)
         else:
             model.train(iterations, output_filename="w2v_model_with_embeddings", save_type="weights", debug=debug, verbose=verbose, train_partial=train_partial)
+            # notify user when training ends
+            #import winsound
+            #winsound.Beep(2500, 1000)
 
-    # find similar words
     if perform_task:
+        # find similar words
         for word in qn_words:
             word_list = model.find_similar(word, 5)
             print("words most similar to:", word)
             print(word_list)
             print()
+        print()
         
         # perform analogical reasoning task
         for i in range(0, 9):
-            answer = model.deduce(qn_words[i * 4], qn_words[i * 4 + 1], qn_words[i * 4 + 2])
-            print("question:", qn_words[i * 4], "-", qn_words[i * 4 + 1], "+", qn_words[i * 4 + 2])
+            answer = model.deduce(qn_words[i * 4], qn_words[i * 4 + 1], qn_words[i * 4 + 3])
+            print("question:", qn_words[i * 4], "-", qn_words[i * 4 + 1], "+", qn_words[i * 4 + 3])
             print("answer:", answer) # TODO: better format for output
             print()
+            answer = model.deduce(qn_words[i * 4 + 1], qn_words[i * 4], qn_words[i * 4 + 2])
+            print("question:", qn_words[i * 4 + 1], "-", qn_words[i * 4], "+", qn_words[i * 4 + 2])
+            print("answer:", answer) # TODO: better format for output
+            print()
+            answer = model.deduce(qn_words[i * 4 + 2], qn_words[i * 4 + 3], qn_words[i * 4 + 1])
+            print("question:", qn_words[i * 4 + 2], "-", qn_words[i * 4 + 3], "+", qn_words[i * 4 + 1])
+            print("answer:", answer) # TODO: better format for output
+            print()
+            answer = model.deduce(qn_words[i * 4 + 3], qn_words[i * 4 + 2], qn_words[i * 4])
+            print("question:", qn_words[i * 4 + 3], "-", qn_words[i * 4 + 2], "+", qn_words[i * 4])
+            print("answer:", answer) # TODO: better format for output
+            print()
+        print()
     
     
     ## make predictions
@@ -614,15 +631,22 @@ def main():
             print("words most similar to:", word)
             print(word_list)
             print()
+        print()
         #print(model.corpus[:100]) # optionally print part of the corpus for reference
 
 
         # perform analogical reasoning task on easier questions.
         for i in range(0, 5):
             answer = model.deduce(qn_words_test[i * 4], qn_words_test[i * 4 + 1], qn_words_test[i * 4 + 2])
-            print("question:", qn_words_test[i * 4], "-", qn_words_test[i * 4 + 1], "+", qn_words_test[i * 4 + 2])
+            print("answer:", answer) # TODO: better format for output
+            answer = model.deduce(qn_words_test[i * 4 + 1], qn_words_test[i * 4], qn_words_test[i * 4 + 3])
+            print("answer:", answer) # TODO: better format for output
+            answer = model.deduce(qn_words_test[i * 4 + 2], qn_words_test[i * 4 + 3], qn_words_test[i * 4])
+            print("answer:", answer) # TODO: better format for output
+            answer = model.deduce(qn_words_test[i * 4 + 3], qn_words_test[i * 4 + 2], qn_words_test[i * 4 + 1])
             print("answer:", answer) # TODO: better format for output
             print()
+        print()
 
 
     # analyse the proportion of the n most frequent words
@@ -640,6 +664,7 @@ def main():
 
         print("total vocabulary size:", len(model.occurrence_dict))
         print()
+    print()
     
 
     # take a look at the word embeddings
