@@ -90,28 +90,31 @@ def process_text(filename, pickle_filename):
         pickle.dump(ind2word, f)
 
 
-
-class Word2Vec(nn.Module):
+# TODO: implement hierarchical softmax and negative sampling
+# TODO: implement subsampling and support other affected operations (saving, loading etc.)
+class Word2Vec():
 
     '''
-    Word2Vec(architecture="skipgram", dimension=100, max_context_dist=4, learning_rate=1e-3,
-                pickle_filename=None, load_model=False, model_filename=None, mode="nn")
-    
+    Word2Vec(architecture="skipgram", mode="negative_sampling", subsample=True,
+                dimension=300, max_context_dist=4, learning_rate=1e-3,
+                pickle_filename=None, load_model=False, model_filename=None):
 
     Creates a word2vec model with the given parameters.
 
     Raises ValueError if an invalid architecture name is provided (i.e. other than "skipgram" or "cbow").
+    Raises ValueError if an invalid mode is provided.
     '''
-    def __init__(self, architecture="skipgram", dimension=100, max_context_dist=4, learning_rate=1e-3,
-                    pickle_filename=None, load_model=False, model_filename=None, mode="tensor"):
+    def __init__(self, architecture="skipgram", mode="negative_sampling", subsample=True,
+                    dimension=300, max_context_dist=4, learning_rate=1e-3,
+                    pickle_filename=None, load_model=False, model_filename=None):
 
-        # not used in tensor mode
-        super(Word2Vec, self).__init__()
 
         # determine architecture
         if architecture == "skipgram":
+            self.architecture = "skipgram"
             self.func = self.skipgram
         elif architecture == "cbow":
+            self.architecture = "cbow"
             self.func = self.cbow
         else:
             raise ValueError("Architecture not recognised.")
@@ -120,7 +123,31 @@ class Word2Vec(nn.Module):
         self.learning_rate = learning_rate
         self.window = max_context_dist
         self.dimension = dimension
+
+
+        # select mode to use
+        if mode == "negative_sampling":
+            raise NotImplementedError("Negative sampling not implemented.")
+        elif mode == "hierarchical_softmax":
+            raise NotImplementedError("Hierarchical softmax not implemented.")
+        elif mode == "none":
+            pass
+        else:
+            raise ValueError("Invalid word2vec mode.")
+
         self.mode = mode
+        self.subsample = subsample
+
+
+        # perform subsampling
+        # TODO: implement subsampling operation and support loading and saving models trained on a subsampled corpus
+        if self.subsample:
+
+            # set seed to use for reproducibility
+            self.seed = random.randrange(0, 10, 1) # range of 0 to 9 (for now)
+            random.seed(self.seed)
+        
+
 
 
         # load preprocessed corpus and relevant dictionaries
@@ -133,35 +160,14 @@ class Word2Vec(nn.Module):
 
 
         # initialise or load embedding weights
-        # TODO: streamline weight init.
         if load_model:
             if model_filename is None:
                 raise ValueError("model_filename not provided.")
+            self.load_model(model_filename)
 
-            if mode == "nn":
-                self.load_model(model_filename, load_type="state_dict")
-            elif mode == "tensor":
-                self.load_model(model_filename, load_type="weights")
-            else:
-                raise ValueError("load_type not recognised.")
         else:
-            if mode == "nn":
-                self.embedding = nn.Embedding(self.vocabulary_size, self.dimension)
-                self.output = nn.Linear(self.vocabulary_size, self.dimension)
-                indices = torch.tensor([i for i in range(self.vocabulary_size)])
-                self.W_emb = self.embedding(indices)
-            
-            elif mode == "tensor":
-                self.W_emb = torch.randn(self.vocabulary_size, self.dimension) / dimension**0.5
-                self.W_out = torch.randn(self.vocabulary_size, self.dimension) / dimension**0.5
-            
-            else:
-                raise ValueError("load_type not recognised.")
-        
-
-        # define optimiser if in nn mode
-        if mode == "nn":
-            self.optimizer = optim.Adam(self.parameters(), lr=0.001, weight_decay=0)
+            self.W_emb = torch.randn(self.vocabulary_size, self.dimension) / dimension**0.5
+            self.W_out = torch.randn(self.vocabulary_size, self.dimension) / dimension**0.5
 
 
 
@@ -169,18 +175,21 @@ class Word2Vec(nn.Module):
     load_model(filename)
 
 
-    Loads model saved during training. Supports loading tensors or nn.Module model parameters.
+    Loads certain parameters saved during training.
     '''
-    def load_model(self, filename, load_type="state_dict"):
-        if load_type == "weights":
-            W_dict = torch.load(filename)
-            self.W_emb = W_dict["W_emb"]
-            self.W_out = W_dict["W_out"]
-        elif load_type == "state_dict":
-            self.load_state_dict(torch.load(filename))
-        else:
-            raise ValueError("Invalid load_type in load_model().")
+    def load_model(self, filename):
 
+        print("loading model...")
+        W_dict = torch.load(filename)
+        self.W_emb = W_dict["W_emb"]
+        self.W_out = W_dict["W_out"]
+
+        if self.subsample:
+            self.seed = W_dict["seed"]
+            print("subsampling seed:", self.seed)
+        
+        if self.mode != W_dict["mode"]:
+            print("WARNING: mode mismatch detected.")
 
 
     '''
@@ -209,12 +218,40 @@ class Word2Vec(nn.Module):
     def _process_corpus(self, filename):
         # TODO: streamline corpus preprocessing(low priority)
         p_filename = "w2v_vars_process_corpus"
+        
+        # TODO: alternative process_text method with subsampling
         process_text(filename, p_filename)
+
+
         self.load_w2v_vars(p_filename)
         self.corpus_size = len(self.corpus)
         self.vocabulary_size = len(self.occurrence_dict)
 
 
+    '''
+    save_weights(filename)
+
+
+    Save weights and, when required, other variables.
+    '''
+    def save_weights(self, filename):
+        if self.verbose:
+            print()
+            print("saving model to file...")
+        
+        W_dict = {"W_emb" : self.W_emb, "W_out" : self.W_out}
+        
+        if self.subsample:
+            W_dict["seed"] = self.seed
+        
+        if self.mode != "none":
+            W_dict["mode"] = self.mode
+        
+        torch.save(W_dict, filename)
+
+        if self.verbose:
+            print("model saved to file successfully.")
+            print()
 
     '''
     getContextIndices(center_index)
@@ -243,7 +280,6 @@ class Word2Vec(nn.Module):
 
 
     Returns loss.
-    Warning: nn.Module autograd not yet supported.
     '''
     def forward(self, center_index, context_indices):
         return self.func(center_index, context_indices)
@@ -269,8 +305,7 @@ class Word2Vec(nn.Module):
     Finds a number of words that are the most similar to a given word.
     '''
     def find_similar(self, word, n_output=5):
-        # TODO: allow both nn and tensor modes
-        #       also to use Pytorch cosine similarity instead
+        # TODO: use Pytorch cosine similarity instead
 
 
         # obtain lengths of embedding vectors
@@ -326,7 +361,7 @@ class Word2Vec(nn.Module):
         W_emb_normalised = self.W_emb / W_emb_lengths[:, None]
         similarity = (W_emb_normalised * word_answer).sum(1)
 
-        # find 5 words most similar to the representation
+        # find 10 words most similar to the representation
         values, indices = similarity.topk(10)
 
         word_list = []
@@ -338,17 +373,27 @@ class Word2Vec(nn.Module):
 
 
     '''
-    train(iteration=50000, output_filename=None, debug=False, verbose=False, train_partial=False, save_type="weights")
+    train(iteration=50000, output_filename=None, debug=False, verbose=False, train_partial=False)
 
 
     Trains the model according to the given parameters.
     '''
-    def train(self, iteration=50000, output_filename=None, debug=False, verbose=False, train_partial=False, save_type="weights"):
+    def train(self, iteration=50000, output_filename=None, debug=False, verbose=False, train_partial=False):
         
         # check if the user wants to debug
         self.debug = debug
         self.verbose = verbose
         self.train_partial = train_partial
+
+        # set progress checking and weight saving iterations
+        if self.architecture == "skipgram":
+            self.progress_check_iteration = 500
+            self.weight_save_iteration = 5000
+
+        elif self.architecture == "cbow":
+            self.progress_check_iteration = 1000
+            self.weight_save_iteration = 10000
+        
 
         # check if the model should keep training
         inf_train = False
@@ -363,17 +408,17 @@ class Word2Vec(nn.Module):
         while i < iteration or inf_train:
             i += 1
 
-            # obtain random context
+            # obtain random center word index
             center_index = random.randint(0, self.corpus_size - 1)
 
             # check if the user wants to train on a partial corpus
             if train_partial:
-                center_index = center_index % 100
+                center_index = center_index % 1000
 
             # obtain context_indices
             context_indices = self.getContextIndices(center_index)
 
-            # train using self.func (tensor mode; nn mode not implemented)
+            # train using self.func
             loss = self(center_index, context_indices)
             loss_list.append(loss)
 
@@ -389,44 +434,20 @@ class Word2Vec(nn.Module):
 
 
             # average loss calculation
-            if i % 500 == 0:
+            if i % self.progress_check_iteration == 0:
                 loss_avg = sum(loss_list) / len(loss_list)
                 print("iteration:", i)
                 print("loss:", loss_avg)
                 loss_list = []
             
 
-            # TODO: streamline weights-saving
             # save weights to file automatically after a certain number of iterations
-            if i % 5000 == 0:
-                if output_filename is not None:
-                    print()
-                    print("saving model to file...")
-
-                    if save_type == "weights":
-                        W_dict = {"W_emb" : self.W_emb, "W_out" : self.W_out}
-                        torch.save(W_dict, output_filename)
-                    elif save_type == "state_dict":
-                        torch.save(self.state_dict(), output_filename)
-
-                    print("model saved to file successfully.")
-                    print()
+            if i % self.weight_save_iteration == 0:
+                self.save_weights(output_filename)
 
 
-        # TODO: streamline weights-saving
         # save weights to file after training is complete
-        if output_filename is not None:
-            print()
-            print("saving model to file...")
-
-            if save_type == "weights":
-                W_dict = {"W_emb" : self.W_emb, "W_out" : self.W_out}
-                torch.save(W_dict, output_filename)
-            elif save_type == "state_dict":
-                torch.save(self.state_dict(), output_filename)
-
-            print("model saved to file successfully.")
-            print()
+        self.save_weights(output_filename)
 
     
 
@@ -434,13 +455,16 @@ class Word2Vec(nn.Module):
     skipgram(center_index, context_indices)
 
 
-    Performs skipgram training. Returns loss as an integer.
+    Performs skipgram training. Returns loss as a primitive.
     '''
     def skipgram(self, center_index, context_indices):
-        if self.mode == "nn":
-            raise NotImplementedError("skipgram() in nn mode not implemented.")
+        if self.mode == "negative_sampling":
+            raise NotImplementedError("skipgram() in negative sampling mode not implemented.")
+
+        if self.mode == "hierarchical_softmax":
+            raise NotImplementedError("skipgram() in hierarchical softmax mode not implemented.")
         
-        elif self.mode == "tensor":
+        elif self.mode == "none":
             
             # obtain embedding indices
             center_emb_index = self.word2ind[self.corpus[center_index]]
@@ -471,13 +495,16 @@ class Word2Vec(nn.Module):
     cbow(center_index, context_indices)
 
 
-    Performs CBOW training. Returns loss as an integer.
+    Performs CBOW training. Returns loss as a primitive.
     '''
     def cbow(self, center_index, context_indices):
-        if self.mode == "nn":
-            raise NotImplementedError("cbow() in nn mode not implemented.")
+        if self.mode == "negative_sampling":
+            raise NotImplementedError("skipgram() in negative sampling mode not implemented.")
+
+        if self.mode == "hierarchical_softmax":
+            raise NotImplementedError("skipgram() in hierarchical softmax mode not implemented.")
         
-        elif self.mode == "tensor":
+        elif self.mode == "none":
 
             # obtain embedding indices
             center_emb_index = self.word2ind[self.corpus[center_index]]
@@ -558,22 +585,19 @@ def main():
     # create model
     # NOTE: the text8 file must be in the same directory to generate the pickle file.
 
-    # NOTE: nn mode training is not supported.
-    # Consequently, save_type should also be set to "weights" and not "state_dict".
-
     if load_model:
-        model = Word2Vec("cbow", mode="tensor", learning_rate=learning_rate, load_model=load_model, model_filename="w2v_model_with_embeddings", pickle_filename="w2v_vars")
+        model = Word2Vec("cbow", mode="none", learning_rate=learning_rate, load_model=load_model, model_filename="w2v_model_with_embeddings", pickle_filename="w2v_vars")
     else:
-        model = Word2Vec("cbow", mode="tensor", learning_rate=learning_rate, load_model=load_model, model_filename="w2v_model_with_embeddings", pickle_filename=None) # to make it explicit that we are not loading a pickle file
+        model = Word2Vec("cbow", mode="none", learning_rate=learning_rate, load_model=load_model, model_filename="w2v_model_with_embeddings", pickle_filename=None) # to make it explicit that we are not loading a pickle file
     
     # train model (takes a long time)
     if perform_training:
         print("commencing training...")
         if inf_train:
-            model.train(-1, output_filename="w2v_model_with_embeddings", save_type="weights", debug=debug, verbose=verbose, train_partial=train_partial)
+            model.train(-1, output_filename="w2v_model_with_embeddings", debug=debug, verbose=verbose, train_partial=train_partial)
         else:
-            model.train(iterations, output_filename="w2v_model_with_embeddings", save_type="weights", debug=debug, verbose=verbose, train_partial=train_partial)
-            # notify user when training ends
+            model.train(iterations, output_filename="w2v_model_with_embeddings", debug=debug, verbose=verbose, train_partial=train_partial)
+            ## notify user when training ends
             #import winsound
             #winsound.Beep(2500, 1000)
 
