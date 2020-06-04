@@ -655,7 +655,7 @@ def main():
     load_model = args.load_model
     learning_rate = args.learning_rate
     iterations = args.iterations
-    subsample = args.subsample
+    subsample = args.subsample # note: subsampling occurs during training
 
 
     # define question words
@@ -816,11 +816,18 @@ def main():
     if debug:# and False:
         import matplotlib.pyplot as plt
 
-        x = [x for x in range(0, 10000, 100)]
+        # x-axis values
+        x = [x for x in range(0, 1000, 10)]
+        x = x + [a for a in range(1000, 10000, 100)]
+        x = x + [b for b in range(10000, 72000, 1000)]
         y = []
 
+        # calculate cumulative percentage of the most common x words in the corpus
         for n in x:
-            y.append(sum([model.occurrence_dict[model.ind2word[i]] for i in range(0, n)]) / len(model.corpus) * 100)
+            if n in model.ind2word and model.ind2word[n] in model.corpus:
+                    y.append(sum([model.occurrence_dict[model.ind2word[i]] for i in range(0, n)]) / len(model.corpus) * 100)
+            else:
+                y.append(100) # not a fail-safe way but significantly quicker
 
         plt.figure()
         plt.plot(x, y)
