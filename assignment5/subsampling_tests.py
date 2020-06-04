@@ -197,9 +197,9 @@ def main():
 
             label = "t=" + str(t)
             lines[t],  = plt.plot(x, y, label=label)
-            plt.legend(handles=[lines[t]])
             print()
 
+        plt.legend()
         plt.show()
 
 
