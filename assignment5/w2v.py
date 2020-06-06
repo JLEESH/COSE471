@@ -856,7 +856,7 @@ def main():
     perform_task = args.task
     perform_training = args.train
     debug = args.debug
-    verbose = args.debug  # assume verbose is true when debug is true
+    verbose = False #args.debug
     train_partial = args.train_partial
     inf_train = args.inf_train
     load_model = args.load_model
