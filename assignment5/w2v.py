@@ -118,32 +118,43 @@ class Word2Vec():
                  pickle_filename=None, load_model=False, model_filename=None,
                  debug=False):
 
-        # determine architecture
+        # determine architecture and mode
         if architecture == "skipgram":
-            self.architecture = "skipgram"
-            self.func = self.skipgram
+            if mode == "negative_sampling":
+                self.architecture = "skipgram_ns"
+                self.func = self.skipgram_ns
+            elif mode == "hierarchical_softmax":
+                self.architecture = "skipgram_hs"
+                self.func = self.skipgram_hs
+            elif mode == "none":
+                self.architecture = "skipgram_none"
+                self.func = self.skipgram
+            else:
+                raise ValueError("Mode not recognised.")
+        
         elif architecture == "cbow":
-            self.architecture = "cbow"
-            self.func = self.cbow
+            if mode == "negative_sampling":
+                self.architecture = "cbow_ns"
+                self.func = self.cbow_ns
+            elif mode == "hierarchical_softmax":
+                self.architecture = "cbow_hs"
+                self.func = self.cbow_hs
+            elif mode == "none":
+                self.architecture = "cbow_none"
+                self.func = self.cbow
+            else:
+                raise ValueError("Mode not recognised.")
+            
         else:
             raise ValueError("Architecture not recognised.")
+
+        self.mode = mode
+
 
         # define certain hyperparameters
         self.learning_rate = learning_rate
         self.window = max_context_dist
         self.dimension = dimension
-
-        # select mode to use
-        if mode == "negative_sampling":
-            raise NotImplementedError("Negative sampling not implemented.")
-        elif mode == "hierarchical_softmax":
-            raise NotImplementedError("Hierarchical softmax not implemented.")
-        elif mode == "none":
-            pass
-        else:
-            raise ValueError("Invalid word2vec mode.")
-
-        self.mode = mode
         self.subsample = subsample
         self.debug = debug
 
@@ -157,6 +168,11 @@ class Word2Vec():
         # define the corpus and vocabulary sizes
         self.corpus_size = len(self.corpus)
         self.vocabulary_size = len(self.occurrence_dict)
+
+        # generate frequency_dict
+        for word in self.occurrence_dict:
+            self.frequency_dict[word] = self.occurrence_dict[word] / self.corpus_size
+
 
 
         # initialise or load embedding weights
@@ -172,7 +188,6 @@ class Word2Vec():
             print("Model created with the following parameters:",
                   "\nloaded model?", load_model,
                   "\narchitecture:", self.architecture,
-                  "\nmode (affects W_out):", self.mode,
                   "\nno. of dimensions:", self.dimension,
                   "\nwindow size:", self.window,
                   "\nsubsampling:", self.subsample,
@@ -193,6 +208,7 @@ class Word2Vec():
             self.vocabulary_size, self.dimension) / self.dimension**0.5
         
         self.trained_iterations = 0
+        
 
 
 
@@ -208,7 +224,7 @@ class Word2Vec():
         print("saving model to file...")
 
         W_dict = {"W_emb": self.W_emb, "W_out": self.W_out}
-        W_dict["mode"] = self.mode
+        W_dict["architecture"] = self.architecture
         W_dict["trained_iterations"] = self.trained_iterations
         torch.save(W_dict, filename)
 
@@ -231,14 +247,17 @@ class Word2Vec():
         self.W_emb = W_dict["W_emb"]
         self.W_out = W_dict["W_out"]
 
-        if self.mode != W_dict["mode"]:
-            print("WARNING: mode mismatch detected.")
+        if self.architecture != W_dict["architecture"]:
+            print("WARNING: architecture mismatch detected.")
+            print("architecture specified:\t", self.architecture)
+            print("architecture of model:\t", W_dict["architecture"])
+            print()
 
         self.trained_iterations = W_dict["trained_iterations"]
 
 
         if self.debug:
-            print("mode:", self.mode)
+            print("architecture:", self.architecture)
             print("iterations trained:", self.trained_iterations)
         
         print("model loaded.")
@@ -287,15 +306,13 @@ class Word2Vec():
     '''
     def subsample_corpus(self, threshold):
 
-        # initiate dictionaries
-        frequency_dict = {}
+        # initiate discard_probability
         discard_probability = {}
 
         # calculate discard probability for each word in the vocabulary
         for index in range(self.vocabulary_size):
             word = self.ind2word[index]
-            frequency_dict[word] = self.occurrence_dict[word] / self.corpus_size
-            discard_probability[word] = 1 - (threshold / frequency_dict[word]) ** 0.5
+            discard_probability[word] = 1 - (threshold / self.frequency_dict[word]) ** 0.5
         
         # create new corpus
         new_corpus = [word for word in self.corpus if random.uniform(0, 1) >  discard_probability[word]]
@@ -455,11 +472,11 @@ class Word2Vec():
         self.train_partial = train_partial
 
         # set progress checking and weight saving iterations
-        if self.architecture == "skipgram":
-            self.progress_check_iteration = 500
+        if self.architecture.split('_')[0] == "skipgram":
+            self.progress_check_iteration = 50
             self.weight_save_iteration = self.progress_check_iteration * 10
 
-        elif self.architecture == "cbow":
+        elif self.architecture.split('_')[0] == "cbow":
             self.progress_check_iteration = 100
             self.weight_save_iteration = self.progress_check_iteration * 10
 
@@ -526,45 +543,115 @@ class Word2Vec():
 
 
     '''
+    get_ns_indices()
+
+    Generates indices for negative sampling.
+    Returns a list of integers.
+    '''
+    def get_ns_indices(self):
+        pass
+
+
+    '''
     skipgram(center_index, context_indices)
 
 
     Performs skipgram training. Returns loss as a primitive.
     '''
     def skipgram(self, center_index, context_indices):
-        if self.mode == "negative_sampling":
-            raise NotImplementedError(
-                "skipgram() in negative sampling mode not implemented.")
+        # obtain embedding indices
+        center_emb_index = self.word2ind[self.corpus[center_index]]
+        context_emb_indices = [self.word2ind[self.corpus[index]]
+                                for index in context_indices]
 
-        if self.mode == "hierarchical_softmax":
-            raise NotImplementedError(
-                "skipgram() in hierarchical softmax mode not implemented.")
+        # feed forward
+        center_vector = self.W_emb[center_emb_index]
+        output = torch.mv(self.W_out, center_vector)
+        softmax = F.softmax(output, 0)
 
-        elif self.mode == "none":
+        # calculate loss and gradients
+        for index in context_emb_indices:
+            g = softmax.clone()
+            g[index] -= 1
+            loss = -1 * F.log_softmax(output, 0)[index]
+            grad_emb = torch.mv(self.W_out.t(), g)
+            grad_out = torch.ger(center_vector, g).t()
 
-            # obtain embedding indices
-            center_emb_index = self.word2ind[self.corpus[center_index]]
-            context_emb_indices = [self.word2ind[self.corpus[index]]
-                                   for index in context_indices]
+            # update weights
+            self.W_emb[center_emb_index] -= self.learning_rate * grad_emb
+            self.W_out -= self.learning_rate * grad_out
 
-            # feed forward
-            center_vector = self.W_emb[center_emb_index]
-            output = torch.mv(self.W_out, center_vector)
-            softmax = F.softmax(output, 0)
+        return loss.item()
 
-            # calculate loss and gradients
-            for index in context_emb_indices:
-                g = softmax.clone()
-                g[index] -= 1
-                loss = -1 * F.log_softmax(output, 0)[index]
-                grad_emb = torch.mv(self.W_out.t(), g)
-                grad_out = torch.ger(center_vector, g).t()
 
-                # update weights
-                self.W_emb[center_emb_index] -= self.learning_rate * grad_emb
-                self.W_out -= self.learning_rate * grad_out
 
-            return loss.item()
+
+    '''
+    skipgram_ns(center_index, context_indices)
+
+
+    Performs skipgram training with negative sampling. Returns loss as a primitive.
+    '''
+    def skipgram_ns(self, center_index, context_indices):
+        # obtain embedding indices
+        center_emb_index = self.word2ind[self.corpus[center_index]]
+        context_emb_indices = [self.word2ind[self.corpus[index]]
+                                for index in context_indices]
+        
+        # negative sampling
+        self.W_out_ns = self.W_out[self.get_ns_indices()]
+
+        # feed forward
+        center_vector = self.W_emb[center_emb_index]
+        output = torch.mv(self.W_out_ns, center_vector)
+        softmax = F.softmax(output, 0)
+
+        # calculate loss and gradients
+        for index in context_emb_indices:
+            g = softmax.clone()
+            g[index] -= 1
+            loss = -1 * F.log_softmax(output, 0)[index]
+            grad_emb = torch.mv(self.W_out_ns.t(), g)
+            grad_out = torch.ger(center_vector, g).t()
+
+            # update weights
+            self.W_emb[center_emb_index] -= self.learning_rate * grad_emb
+            self.W_out_ns -= self.learning_rate * grad_out
+
+        return loss.item()
+
+
+
+    '''
+    skipgram_hs(center_index, context_indices)
+
+
+    Performs skipgram training with hierarchical softmax. Returns loss as a primitive.
+    '''
+    def skipgram_hs(self, center_index, context_indices):
+        # obtain embedding indices
+        center_emb_index = self.word2ind[self.corpus[center_index]]
+        context_emb_indices = [self.word2ind[self.corpus[index]]
+                                for index in context_indices]
+
+        # feed forward
+        center_vector = self.W_emb[center_emb_index]
+        output = torch.mv(self.W_out, center_vector)
+        softmax = F.softmax(output, 0)
+
+        # calculate loss and gradients
+        for index in context_emb_indices:
+            g = softmax.clone()
+            g[index] -= 1
+            loss = -1 * F.log_softmax(output, 0)[index]
+            grad_emb = torch.mv(self.W_out.t(), g)
+            grad_out = torch.ger(center_vector, g).t()
+
+            # update weights
+            self.W_emb[center_emb_index] -= self.learning_rate * grad_emb
+            self.W_out -= self.learning_rate * grad_out
+
+        return loss.item()
 
 
 
@@ -575,39 +662,95 @@ class Word2Vec():
     Performs CBOW training. Returns loss as a primitive.
     '''
     def cbow(self, center_index, context_indices):
-        if self.mode == "negative_sampling":
-            raise NotImplementedError(
-                "skipgram() in negative sampling mode not implemented.")
+        # obtain embedding indices
+        center_emb_index = self.word2ind[self.corpus[center_index]]
+        context_emb_indices = [self.word2ind[self.corpus[index]]
+                                for index in context_indices]
 
-        if self.mode == "hierarchical_softmax":
-            raise NotImplementedError(
-                "skipgram() in hierarchical softmax mode not implemented.")
+        # feed forward
+        context_vector = torch.zeros_like(self.W_emb[center_emb_index])
+        for index in context_emb_indices:
+            context_vector += self.W_emb[index]
+        output = torch.mv(self.W_out, context_vector)
+        softmax = F.softmax(output, 0)
 
-        elif self.mode == "none":
+        # calculate loss and gradients
+        softmax[center_emb_index] -= 1
+        loss = -1 * F.log_softmax(output, 0)[center_emb_index]
+        grad_emb = torch.mv(self.W_out.t(), softmax)
+        grad_out = torch.ger(context_vector, softmax).t()
 
-            # obtain embedding indices
-            center_emb_index = self.word2ind[self.corpus[center_index]]
-            context_emb_indices = [self.word2ind[self.corpus[index]]
-                                   for index in context_indices]
+        # update weights
+        self.W_emb[context_emb_indices] -= self.learning_rate * grad_emb
+        self.W_out -= self.learning_rate * grad_out
 
-            # feed forward
-            context_vector = torch.zeros_like(self.W_emb[center_emb_index])
-            for index in context_emb_indices:
-                context_vector += self.W_emb[index]
-            output = torch.mv(self.W_out, context_vector)
-            softmax = F.softmax(output, 0)
+        return loss.item()
 
-            # calculate loss and gradients
-            softmax[center_emb_index] -= 1
-            loss = -1 * F.log_softmax(output, 0)[center_emb_index]
-            grad_emb = torch.mv(self.W_out.t(), softmax)
-            grad_out = torch.ger(context_vector, softmax).t()
 
-            # update weights
-            self.W_emb[context_emb_indices] -= self.learning_rate * grad_emb
-            self.W_out -= self.learning_rate * grad_out
 
-            return loss.item()
+    '''
+    cbow_ns(center_index, context_indices)
+
+
+    Performs CBOW training with negative sampling. Returns loss as a primitive.
+    '''
+    def cbow_ns(self, center_index, context_indices):
+        # obtain embedding indices
+        center_emb_index = self.word2ind[self.corpus[center_index]]
+        context_emb_indices = [self.word2ind[self.corpus[index]]
+                                for index in context_indices]
+
+        # feed forward
+        context_vector = torch.zeros_like(self.W_emb[center_emb_index])
+        for index in context_emb_indices:
+            context_vector += self.W_emb[index]
+        output = torch.mv(self.W_out, context_vector)
+        softmax = F.softmax(output, 0)
+
+        # calculate loss and gradients
+        softmax[center_emb_index] -= 1
+        loss = -1 * F.log_softmax(output, 0)[center_emb_index]
+        grad_emb = torch.mv(self.W_out.t(), softmax)
+        grad_out = torch.ger(context_vector, softmax).t()
+
+        # update weights
+        self.W_emb[context_emb_indices] -= self.learning_rate * grad_emb
+        self.W_out -= self.learning_rate * grad_out
+
+        return loss.item()
+
+
+
+    '''
+    cbow_hs(center_index, context_indices)
+
+
+    Performs CBOW training with hierarchical softmax. Returns loss as a primitive.
+    '''
+    def cbow_hs(self, center_index, context_indices):
+        # obtain embedding indices
+        center_emb_index = self.word2ind[self.corpus[center_index]]
+        context_emb_indices = [self.word2ind[self.corpus[index]]
+                                for index in context_indices]
+
+        # feed forward
+        context_vector = torch.zeros_like(self.W_emb[center_emb_index])
+        for index in context_emb_indices:
+            context_vector += self.W_emb[index]
+        output = torch.mv(self.W_out, context_vector)
+        softmax = F.softmax(output, 0)
+
+        # calculate loss and gradients
+        softmax[center_emb_index] -= 1
+        loss = -1 * F.log_softmax(output, 0)[center_emb_index]
+        grad_emb = torch.mv(self.W_out.t(), softmax)
+        grad_out = torch.ger(context_vector, softmax).t()
+
+        # update weights
+        self.W_emb[context_emb_indices] -= self.learning_rate * grad_emb
+        self.W_out -= self.learning_rate * grad_out
+
+        return loss.item()
 
 
 
@@ -750,6 +893,8 @@ def main():
     # model.predict("hello")
 
 
+
+
     '''
     ###### DEBUG #####
 
@@ -791,6 +936,8 @@ def main():
         print()
 
 
+
+
     # Assignment 4:
     # analyse the proportion of the n most frequent words
     # note that the most frequent 50 words take up more than 40% of the corpus,
@@ -800,7 +947,7 @@ def main():
     # Assignment 5:
     # when the model is subsampled, the proportion of the most common words decreases significantly
 
-    if debug:# and False:
+    if debug and False:
         print()
         for n in [10, 50, 100, 300, 500, 2000, 3000]:
             print("The top", n, "most frequent words: ")
@@ -813,7 +960,9 @@ def main():
         print()
     print()
 
-    if debug:# and False:
+
+    # plot the effect of subsampling
+    if debug and False:
         import matplotlib.pyplot as plt
 
         # x-axis values
@@ -832,6 +981,9 @@ def main():
         plt.figure()
         plt.plot(x, y)
         plt.show()
+
+
+
 
 
     # take a look at the word embeddings
