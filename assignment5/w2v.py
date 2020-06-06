@@ -169,10 +169,9 @@ class Word2Vec():
         self.corpus_size = len(self.corpus)
         self.vocabulary_size = len(self.occurrence_dict)
 
-        # generate frequency_dict
-        for word in self.occurrence_dict:
-            self.frequency_dict[word] = self.occurrence_dict[word] / self.corpus_size
 
+        # generate some frequency/distribution dictionaries
+        self._generate_dist_dicts()
 
 
         # initialise or load embedding weights
@@ -301,8 +300,9 @@ class Word2Vec():
 
     Subsamples the corpus.
 
-    WARNING: only self.corpus, self.corpus_size and self.occurrence_dict are affected by this operation.
-    Other related variables do not change their values.
+    WARNING: only self.corpus, self.corpus_size, self.occurrence_dict, self.frequency_dict
+    and self.ns_dist_dict (if in negative_sampling mode) are affected by this operation.
+    Other related variables retain their values.
     '''
     def subsample_corpus(self, threshold):
 
@@ -310,8 +310,7 @@ class Word2Vec():
         discard_probability = {}
 
         # calculate discard probability for each word in the vocabulary
-        for index in range(self.vocabulary_size):
-            word = self.ind2word[index]
+        for word in self.frequency_dict:
             discard_probability[word] = 1 - (threshold / self.frequency_dict[word]) ** 0.5
         
         # create new corpus
@@ -320,7 +319,7 @@ class Word2Vec():
         # count new corpus
         new_corpus_count = Counter(new_corpus)
 
-        if self.debug:
+        if self.debug and False:
 
             # output debug information
             debug_word_list = ["of", "the", "lucky", "help", self.ind2word[10], self.ind2word[100], self.ind2word[1000], self.ind2word[10000]]
@@ -331,10 +330,35 @@ class Word2Vec():
                 print("number of instances of", '\"' + word + '\"', "(new):\t", new_corpus_count[word])
         
 
-        # save new corpus and its length
+        # update some corpus-related variables
         self.corpus = new_corpus
         self.corpus_size = len(new_corpus)
         self.occurrence_dict = new_corpus_count
+        self._generate_dist_dicts()
+
+
+
+    '''
+    generate_dist_dicts()
+
+    Interal method to generate distribution dictionaries.
+    '''
+    def _generate_dist_dicts(self):
+        # generate frequency_dict
+        self.frequency_dict = {}
+        for word in self.occurrence_dict:
+            self.frequency_dict[word] = self.occurrence_dict[word] / self.corpus_size
+
+        # generate ns_dist_dict
+        if self.mode == "negative_sampling":
+            self.ns_dist_dict = {}
+
+            # calculate the deteminant of the jacobian of the transformation of the unigram distribution
+            # note that 0.75 is a hyperparameter
+            det_jacobian = sum([self.frequency_dict[word] ** 0.75 for word in self.frequency_dict])
+
+            for word in self.frequency_dict:
+                self.ns_dist_dict[word] = self.frequency_dict[word] ** 0.75 / det_jacobian
 
 
 
@@ -357,6 +381,30 @@ class Word2Vec():
         context_indices = [a for a in range(low, high + 1)]
         context_indices.remove(center_index)
         return context_indices
+
+
+
+    '''
+    get_ns_indices()
+
+    Generates indices for negative sampling.
+    Returns a list of integers.
+    Note: The hyperparameter ns_size is set to 15.
+    '''
+    def get_ns_indices(self, ns_size=15):
+        
+        # sample from negative sampling distribution
+        word_list = random.choices(
+            list(self.ns_dist_dict.keys()),
+            list(self.ns_dist_dict.values()),
+            k=ns_size)
+
+        # obtain list of indices
+        indices_list = []
+        for word in word_list:
+            indices_list.append(self.word2ind[word])
+        
+        return indices_list
 
 
 
@@ -471,15 +519,18 @@ class Word2Vec():
         self.verbose = verbose
         self.train_partial = train_partial
 
+
         # set progress checking and weight saving iterations
         if self.architecture.split('_')[0] == "skipgram":
-            self.progress_check_iteration = 50
-            self.weight_save_iteration = self.progress_check_iteration * 10
-
-        elif self.architecture.split('_')[0] == "cbow":
             self.progress_check_iteration = 100
             self.weight_save_iteration = self.progress_check_iteration * 10
 
+        elif self.architecture.split('_')[0] == "cbow":
+            self.progress_check_iteration = 1000
+            self.weight_save_iteration = self.progress_check_iteration * 10
+
+        # define one "epoch" to be 5 weight saving iterations
+        self.epoch_iteration = self.weight_save_iteration * 5
 
         # perform subsampling
         if self.subsample:
@@ -516,7 +567,7 @@ class Word2Vec():
             loss_list.append(loss)
 
             ############ DEBUG: test getContextIndices() #############
-            if self.debug and False:
+            if self.debug:
                 center = self.corpus[center_index]
                 context = [self.corpus[index] for index in context_indices]
                 if verbose:
@@ -535,21 +586,19 @@ class Word2Vec():
             if i % self.weight_save_iteration == 0:
                 self.trained_iterations = i
                 self.save_model(output_filename)
+            
+            # perform subsampling
+            if self.subsample:
+                if i % self.epoch_iteration == 0:
+                    print("subsampling corpus...")
+                    self.subsample_corpus(0.00001) # change threshold as necessary
+                    print("subsampling complete.")
+                    print()
 
         # save weights to file after training is complete
         self.trained_iterations = i
         self.save_model(output_filename)
 
-
-
-    '''
-    get_ns_indices()
-
-    Generates indices for negative sampling.
-    Returns a list of integers.
-    '''
-    def get_ns_indices(self):
-        pass
 
 
     '''
@@ -569,11 +618,12 @@ class Word2Vec():
         output = torch.mv(self.W_out, center_vector)
         softmax = F.softmax(output, 0)
 
+        loss = 0
         # calculate loss and gradients
         for index in context_emb_indices:
             g = softmax.clone()
             g[index] -= 1
-            loss = -1 * F.log_softmax(output, 0)[index]
+            loss += (-1 * F.log_softmax(output, 0)[index]).item()
             grad_emb = torch.mv(self.W_out.t(), g)
             grad_out = torch.ger(center_vector, g).t()
 
@@ -581,8 +631,7 @@ class Word2Vec():
             self.W_emb[center_emb_index] -= self.learning_rate * grad_emb
             self.W_out -= self.learning_rate * grad_out
 
-        return loss.item()
-
+        return loss / len(context_emb_indices)
 
 
 
@@ -598,19 +647,27 @@ class Word2Vec():
         context_emb_indices = [self.word2ind[self.corpus[index]]
                                 for index in context_indices]
         
-        # negative sampling
-        self.W_out_ns = self.W_out[self.get_ns_indices()]
-
-        # feed forward
+        # extract the center vector
         center_vector = self.W_emb[center_emb_index]
-        output = torch.mv(self.W_out_ns, center_vector)
-        softmax = F.softmax(output, 0)
 
-        # calculate loss and gradients
+        loss = 0
+        # perform update for each context word
         for index in context_emb_indices:
+        
+            # negative sampling
+            # obtains a view of W_out with the relevant indices
+            indices_list = self.get_ns_indices()
+            indices_list.append(index)
+            self.W_out_ns = self.W_out[indices_list]
+
+            # feed forward
+            output = torch.mv(self.W_out_ns, center_vector)
+            softmax = F.softmax(output, 0)
+
+            # calculate loss and gradients
             g = softmax.clone()
-            g[index] -= 1
-            loss = -1 * F.log_softmax(output, 0)[index]
+            g[-1] -= 1
+            loss += (-1 * F.log_softmax(output, 0)[-1]).item()
             grad_emb = torch.mv(self.W_out_ns.t(), g)
             grad_out = torch.ger(center_vector, g).t()
 
@@ -618,7 +675,7 @@ class Word2Vec():
             self.W_emb[center_emb_index] -= self.learning_rate * grad_emb
             self.W_out_ns -= self.learning_rate * grad_out
 
-        return loss.item()
+        return loss / len(context_emb_indices)
 
 
 
@@ -639,11 +696,12 @@ class Word2Vec():
         output = torch.mv(self.W_out, center_vector)
         softmax = F.softmax(output, 0)
 
+        loss = 0
         # calculate loss and gradients
         for index in context_emb_indices:
             g = softmax.clone()
             g[index] -= 1
-            loss = -1 * F.log_softmax(output, 0)[index]
+            loss += (-1 * F.log_softmax(output, 0)[index]).item()
             grad_emb = torch.mv(self.W_out.t(), g)
             grad_out = torch.ger(center_vector, g).t()
 
@@ -651,7 +709,7 @@ class Word2Vec():
             self.W_emb[center_emb_index] -= self.learning_rate * grad_emb
             self.W_out -= self.learning_rate * grad_out
 
-        return loss.item()
+        return loss / len(context_emb_indices)
 
 
 
@@ -700,22 +758,28 @@ class Word2Vec():
         context_emb_indices = [self.word2ind[self.corpus[index]]
                                 for index in context_indices]
 
+        # negative sampling
+        # obtains a view of W_out with the relevant indices
+        indices_list = self.get_ns_indices()
+        indices_list.append(center_emb_index)
+        self.W_out_ns = self.W_out[indices_list]
+
         # feed forward
         context_vector = torch.zeros_like(self.W_emb[center_emb_index])
         for index in context_emb_indices:
             context_vector += self.W_emb[index]
-        output = torch.mv(self.W_out, context_vector)
+        output = torch.mv(self.W_out_ns, context_vector)
         softmax = F.softmax(output, 0)
 
         # calculate loss and gradients
-        softmax[center_emb_index] -= 1
-        loss = -1 * F.log_softmax(output, 0)[center_emb_index]
-        grad_emb = torch.mv(self.W_out.t(), softmax)
+        softmax[-1] -= 1
+        loss = -1 * F.log_softmax(output, 0)[-1]
+        grad_emb = torch.mv(self.W_out_ns.t(), softmax)
         grad_out = torch.ger(context_vector, softmax).t()
 
         # update weights
         self.W_emb[context_emb_indices] -= self.learning_rate * grad_emb
-        self.W_out -= self.learning_rate * grad_out
+        self.W_out_ns -= self.learning_rate * grad_out
 
         return loss.item()
 
@@ -780,7 +844,7 @@ def main():
                         dest="train_partial", default=False, action="store_true")
 
     parser.add_argument("-r", "--learning-rate", dest="learning_rate",
-                        default=5e-3, metavar="lr", type=float)
+                        default=5e-2, metavar="lr", type=float)
 
     parser.add_argument("-s", "--subsample", dest="subsample",
                         default=False, action="store_true")
@@ -826,13 +890,18 @@ def main():
     # create model
     # NOTE: the text8 file must be in the same directory to generate the pickle file.
     if load_model:
-        model = Word2Vec("cbow", mode="none", learning_rate=learning_rate, load_model=load_model, 
-                        model_filename="w2v_model_with_embeddings", pickle_filename="w2v_vars_process_corpus",
-                        max_context_dist=10, debug=debug, subsample=subsample)
+        pickle_filename = "w2v_vars_process_corpus"
     else:
-        model = Word2Vec("cbow", mode="none", learning_rate=learning_rate, load_model=load_model, 
-                        model_filename="w2v_model_with_embeddings", pickle_filename=None, #to make it explicit that we are not loading a pickle file
-                        max_context_dist=10, debug=debug, subsample=subsample)
+        pickle_filename = None
+    
+    # Note: comment away the line below when the pickle file does not already exist
+    # (i.e. make the previous few lines actually do something)
+    pickle_filename = "w2v_vars_process_corpus"
+
+
+    model = Word2Vec("skipgram", mode="negative_sampling", learning_rate=learning_rate, load_model=load_model, 
+                    model_filename="w2v_model_default", pickle_filename=pickle_filename,
+                    max_context_dist=5, debug=debug, subsample=subsample)
 
 
     # train model (takes a long time)
@@ -840,10 +909,10 @@ def main():
         print()
         print("commencing training...")
         if inf_train:
-            model.train(-1, output_filename="w2v_model_with_embeddings",
+            model.train(-1, output_filename="w2v_model_default",
                         debug=debug, verbose=verbose, train_partial=train_partial)
         else:
-            model.train(iterations, output_filename="w2v_model_with_embeddings",
+            model.train(iterations, output_filename="w2v_model_default",
                         debug=debug, verbose=verbose, train_partial=train_partial)
             # notify user when training ends
             import winsound
@@ -862,28 +931,20 @@ def main():
 
         # perform analogical reasoning task
         for i in range(0, 9):
-            answer = model.deduce(
-                qn_words[i * 4], qn_words[i * 4 + 1], qn_words[i * 4 + 3])
-            print("question:", qn_words[i * 4], "-",
-                  qn_words[i * 4 + 1], "+", qn_words[i * 4 + 3])
+            answer = model.deduce(qn_words[i * 4], qn_words[i * 4 + 1], qn_words[i * 4 + 3])
+            print("question:", qn_words[i * 4], "-", qn_words[i * 4 + 1], "+", qn_words[i * 4 + 3])
             print("answer:", answer)  # TODO: better format for output
             print()
-            answer = model.deduce(
-                qn_words[i * 4 + 1], qn_words[i * 4], qn_words[i * 4 + 2])
-            print("question:", qn_words[i * 4 + 1], "-",
-                  qn_words[i * 4], "+", qn_words[i * 4 + 2])
+            answer = model.deduce(qn_words[i * 4 + 1], qn_words[i * 4], qn_words[i * 4 + 2])
+            print("question:", qn_words[i * 4 + 1], "-", qn_words[i * 4], "+", qn_words[i * 4 + 2])
             print("answer:", answer)  # TODO: better format for output
             print()
-            answer = model.deduce(
-                qn_words[i * 4 + 2], qn_words[i * 4 + 3], qn_words[i * 4 + 1])
-            print("question:", qn_words[i * 4 + 2], "-",
-                  qn_words[i * 4 + 3], "+", qn_words[i * 4 + 1])
+            answer = model.deduce(qn_words[i * 4 + 2], qn_words[i * 4 + 3], qn_words[i * 4 + 1])
+            print("question:", qn_words[i * 4 + 2], "-", qn_words[i * 4 + 3], "+", qn_words[i * 4 + 1])
             print("answer:", answer)  # TODO: better format for output
             print()
-            answer = model.deduce(
-                qn_words[i * 4 + 3], qn_words[i * 4 + 2], qn_words[i * 4])
-            print("question:", qn_words[i * 4 + 3], "-",
-                  qn_words[i * 4 + 2], "+", qn_words[i * 4])
+            answer = model.deduce(qn_words[i * 4 + 3], qn_words[i * 4 + 2], qn_words[i * 4])
+            print("question:", qn_words[i * 4 + 3], "-", qn_words[i * 4 + 2], "+", qn_words[i * 4])
             print("answer:", answer)  # TODO: better format for output
             print()
         print()
@@ -902,35 +963,33 @@ def main():
     TODO: use commandline arguments to streamline the debugging process?
     '''
 
-    if debug and False:
+    if debug:
         # debug: find words similar to a certain set of words
-        for i in range(20):
+        for i in range(300, 500):
 
             # select words by frequency or by position in corpus
             word = model.ind2word[i]
             #word = model.corpus[i]
 
             # note: word_list contains tuples
-            word_list = model.find_similar(word, 15)
+            word_list = model.find_similar(word, 5)
             print("words most similar to:", word)
             print(word_list)
             print()
         print()
         # print(model.corpus[:100]) # optionally print part of the corpus for reference
+    
 
+    if debug and False:
         # perform analogical reasoning task on easier questions.
         for i in range(0, 5):
-            answer = model.deduce(
-                qn_words_test[i * 4], qn_words_test[i * 4 + 1], qn_words_test[i * 4 + 2])
+            answer = model.deduce(qn_words_test[i * 4], qn_words_test[i * 4 + 1], qn_words_test[i * 4 + 2])
             print("answer:", answer)  # TODO: better format for output
-            answer = model.deduce(
-                qn_words_test[i * 4 + 1], qn_words_test[i * 4], qn_words_test[i * 4 + 3])
+            answer = model.deduce(qn_words_test[i * 4 + 1], qn_words_test[i * 4], qn_words_test[i * 4 + 3])
             print("answer:", answer)  # TODO: better format for output
-            answer = model.deduce(
-                qn_words_test[i * 4 + 2], qn_words_test[i * 4 + 3], qn_words_test[i * 4])
+            answer = model.deduce(qn_words_test[i * 4 + 2], qn_words_test[i * 4 + 3], qn_words_test[i * 4])
             print("answer:", answer)  # TODO: better format for output
-            answer = model.deduce(
-                qn_words_test[i * 4 + 3], qn_words_test[i * 4 + 2], qn_words_test[i * 4 + 1])
+            answer = model.deduce(qn_words_test[i * 4 + 3], qn_words_test[i * 4 + 2], qn_words_test[i * 4 + 1])
             print("answer:", answer)  # TODO: better format for output
             print()
         print()
