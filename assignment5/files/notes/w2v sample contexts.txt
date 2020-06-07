@@ -1,0 +1,200 @@
+truth
+['concluding', 'demonstrates', 'resurrection', 'begin', 'assertion', 'need', 'no', 'witness', 'concession', 'weakness']
+eleven
+['spend', 'time', 'customary', 'infection', 'consequently', 'heir', 'throne', 'soon', 'he', 'wales']
+store
+['plus', 'misconceived', 'flopped', 'surprise', 'c', 'stock', 'liquidated', 'room', 'supposedly', 'replacements']
+sheep
+['syndrome', 'allele', 'beautiful', 'buttocks', 'gene', 'large', 'buttocks', 'consisting', 'muscle', 'fat']
+union
+['default', 'installation', 'windows', 'media', 'mandated', 'ruling', 'xp', 'users', 'xp', 'above']
+planetary
+['kepler', 'naked', 'observations', 'tycho', 'brahe', 'carry', 'published', 'so', 'do', 'galileo']
+member
+['stores', 'kroger', 'recognized', 'respective', 'loyal', 'stores', 'lion', 'winn', 'dixie', 'chains']
+tag
+['cable', 'technology', 'packet', 'bytes', 'q', 'lan', 'priority', 'three', 'ac', 'bytes']
+mycenae
+['kato', 'kea', 'knossos', 'miletus', 'melos', 'phaistos', 'samothrace', 'tel', 'thera', 'tiryns']
+clear
+['dr', 'shiragami', 'theorizes', 'biollante', 'godzilla', 'prepare', 'strategies', 'indestructible', 'creature', 'super']
+sums
+['f', 'empty', 'order', 'summands', 'different', 'counted', 'proof', 'loss', 'generality', 'assume']
+most
+['without', 'continues', 'grow', 'lava', 'flows', 'reasons', 'hawaii', 'is', 'considered', 'endangered']
+ammonia
+['ammonia', 'excess', 'explosive', 'nitrogen', 'trichloride', 'molecule', 'readily', 'undergoes', 'inversion', 'normal']
+asclepius
+['bc', 'written', 'imhotep', 'medicine', 'healing', 'ptah', 'mother', 'said', 'ptah', 'inventor']
+fondness
+['any', 't', 'fit', 'pattern', 'expecting', 'for', 'french', 'fries', 'pizza', 'cream']
+balls
+['construct', 'decomposition', 'which', 'reassembled', 'unit', 'prove', 'it', 'banach', 'tarski', 'statement']
+comic
+['zoology', 'bristol', 'university', 'chris', 'showed', 'talent', 'sixth', 'when', 'he', 'charon']
+mod
+['ut', 'deus', 'ex', 'mod', 'nameless', 'deus', 'ex', 'mod', 'born', 'deus']
+consumer
+['stabilizing', 'subsidies', 'cost', 'doubling', 'price', 'fuels', 'resulting', 'digit', 'inflation', 'stabilized']
+marginal
+['first', 'australian', 'parliaments', 'mostly', 'although', 'led', 'howard', 'canberra', 'election', 'senate']
+occasion
+['episode', 'shaking', 'hands', 'audrey', 'roberts', 'francis', 'rossi', 'rick', 'quo', 'band']
+presidential
+['knox', 'polk', 'seven', 'deaths', 'democratic', 'nominees', 'governors', 'tennessee', 'methodists', 'from']
+auscultation
+['vs', 'disease', 'hence', 'sufficient', 'diagnose', 'auscultation', 'employs', 'stethoscope', 'hear', 'abnormal']
+background
+['of', 'auditory', 'other', 'sensuous', 'complexity', 'typography', 'incline', 'abstain', 'noting', 'interplay']
+carla
+['obviously', 'several', 'owners', 'bar', 's', 'numerological', 'purposes', 'as', 'stork', 'brings']
+ryukyuan
+['retroflex', 'consonants', 'specialists', 'japanese', 'related', 'okinawan', 'together', 'ryukyuan', 'grouped', 'japonic']
+clare
+['westport', 'county', 'mayo', 'ashford', 'achill', 'patrick', 'knock', 'lough', 'mask', 'mullet']
+tut
+['they', 'extremely', 'click', 'tsk', 'tsk', 'tut', 'sound', 'horse', 'see', 'articulation']
+anthology
+['per', 'issue', 'these', 'manga', 'magazines', 'magazines', 'colloquially', 'phone', 'books', 'printed']
+volunteer
+['large', 'battle', 'desperate', 'legionnaires', 'bulk', 'delivered', 'parachute', 'membership', 'legionnaires', 'who']
+subdued
+['lahore', 'inflicted', 'defeat', 'sikhs', 'lahore', 'kashmir', 'stripped', 'looted', 'delhi', 'treasures']
+common
+['attempt', 'provide', 'commonsense', 'knowledge', 'artificial', 'project', 'other', 'line', 'collaborative', 'projects']
+supposedly
+['mieszko', 'dux', 'nomine', 'first', 'directly', 'roots', 'polish', 'chronicler', 'vandals', 'to']
+waters
+['marks', 'boundary', 'warm', 'salty', 'subtropical', 'salinity', 'nine', 'thousand', 'fresher', 'cooler']
+controlled
+['political', 'foreigners', 'third', 'directorate', 'armed', 'intelligence', 'surveillance', 'soviet', 'armed', 'directorate']
+plants
+['mornings', 'evenings', 'consists', 'vegetation', 'river', 'bark', 'ecological', 'aspects', 'hunting', 'paran']
+an
+['rowling', 'simpsons', 'approached', 'davies', 'contribute', 'amused', 'by', 'suggestion', 'busy', 'novel']
+tories
+['lived', 'greeted', 'riots', 'favoured', 'whigs', 'election', 'whigs', 'impeached', 'tory', 'leaders']
+purple
+['vitale', 'sportscaster', 'nine', 'jon', 'organist', 'bedi', 'lady', 'ips', 'one', 'uzi']
+ailing
+['alexei', 'examined', 'by', 'torture', 'june', 'tsarevich', 'received', 'twenty', 'strokes', 'knout']
+talks
+['forl', 'job', 'chapter', 'leviathan', 'god', 'king', 'beasts', 'lived', 'leviathan', 'enzyme']
+legislature
+['merely', 'frontiers', 'varennes', 'assembly', 'members', 'succeed', 'gathered', 'various', 'fortitude', 'choosing']
+yes
+['gauge', 'railway', 'zambia', 'zimbabwe', 'yes', 'namibia', 'electrified', 'railway', 'connecting', 'namibia']
+cena
+['lead', 'icelandic', 'post', 'sigur', 'seven', 'wrestler', 'rapper', 'cummings', 'jaime', 'daniela']
+nationalists
+['papua', 'confusing', 'discussion', 'guinea', 'papua', 'hope', 'separate', 'indonesia', 'own', 'promised']
+daimlerchrysler
+['benz', 'automotive', 'portal', 'mercedes', 'benz', 'constructors', 'automobile', 'manufacturers', 'grand', 'prix']
+yoga
+['closely', 'theological', 'breadth', 'hinduism', 'vedanta', 'taoism', 'buddhism', 'pantheism', 'zen', 'thought']
+official
+['justices', 'peace', 'legislature', 'nine', 'magistrate', 'dependency', 'jamaican', 'governor', 'jamaica', 'appointing']
+steam
+['locomotive', 'electric', 'diesel', 'locomotives', 'began', 'locomotives', 'locomotives', 'efficient', 'electric', 'counterparts']
+fearing
+['augustus', 'emperor', 'grandsons', 'cicero', 'boy', 'tried', 'hide', 'folds', 'tunic', 'augustus']
+confucius
+['study', 'scholar', 'studies', 'pinyin', 'simplified', 'confucius', 'pinyin', 'simplified', 'ru', 'a']
+octahedron
+['a', 'compound', 'stella', 'intersection', 'forms', 'symmetries', 'tetrahedron', 'correspond', 'cube', 'tetrahedron']
+already
+['dominions', 'commonwealth', 'realms', 'fatally', 'undermined', 'weakened', 'leadership', 'heightened', 'importance', 'the']
+sondheim
+['purposely', 'composed', 'eighth', 'sixteenth', 'rhythms', 'lapine', 'productions', 'narrative', 'converse', 'think']
+progress
+['page', 'search', 'progress', 'typically', 'updated', 'proving', 'ordering', 'primes', 'ff', 'mersenne']
+museums
+['guests', 'arrive', 'boat', 'elbe', 'tunnel', 'museums', 'hamburg', 'altona', 'art', 'kunst']
+dna
+['sven', 'dna', 'bases', 'bases', 'orientation', 'sugars', 'respect', 'bases', 'watson', 'learned']
+allows
+['o', 'term', 'be', 'coordinate', 'transformation', 'oscillator', 'retrieved', 'approx', 'arbitrary', 'x']
+captured
+['alps', 'monumental', 'military', 'feats', 'warfare', 'imagination', 'western', 'romanticized', 'several', 'artworks']
+in
+['accession', 'persian', 'throne', 'had', 'assisted', 'favorable', 'treaty', 'roman', 'armenia', 'maurice']
+gy
+['fractions', 'curative', 'cancer', 'dose', 'prescribed', 'fractions', 'daily', 'lung', 'cases', 'potentially']
+monarch
+['head', 'jure', 'theoretical', 'head', 'appoints', 'majesty', 'government', 'however', 'symbolic', 'or']
+location
+['resembles', 'influenced', 'philosophy', 'other', 'druze', 'druze', 'prince', 'druze', 'reside', 'israel']
+accept
+['remote', 'unruly', 'kirghiz', 'held', 'sway', 'britain', 'another', 'joint', 'anglo', 'boundary']
+re
+['search', 'help', 'filmmakers', 'mad', 'glory', 'taxi', 'bringing', 'out', 'dead', 'casino']
+pollen
+['dates', 'to', 'holocene', 'climatic', 'periods', 'peat', 'moss', 'climate', 'widely', 'periods']
+genealogy
+['bridges', 'michigan', 'michigan', 'artists', 'entertainers', 'michigan', 'michigan', 'infoplease', 'michigan', 'factsheet']
+pandemics
+['bubonic', 'uncharacteristically', 'spread', 'due', 'immunity', 'in', 'populations', 'previous', 'smallpox', 'tuberculosis']
+united
+['resources', 'detail', 'topic', 'ncbi', 'bookshelf', 'institutes', 'following', 'consult', 'griffiths', 'miller']
+failing
+['acoustic', 'he', 'retrieved', 'away', 'only', 'grade', 'white', 'ozark', 'hendrix', 'purchased']
+turret
+['pumps', 'looms', 'spencer', 'automatic', 'lathe', 'machining', 'screws', 'well', 'variable', 'cam']
+historical
+['history', 'bengal', 'bengal', 'early', 'earliest', 'references', 'mention', 'land', 'greeks', 'around']
+competitiveness
+['financial', 'globalisation', 'technological', 'encompasses', 'sectors', 'goods', 'adjust', 'ever', 'preferences', 'consumers']
+measurement
+['following', 'crescent', 'moon', 'vernal', 'equinox', 'zones', 'gregorian', 'begins', 'midnight', 'days']
+narita
+['for', 'kansai', 'airport', 'osaka', 'gateways', 'international', 'airport', 'tokyo', 'kansai', 'airport']
+knowing
+['artemis', 'aphrodite', 'caused', 'mother', 'phaedra', 'hippolytus', 'reject', 'her', 'most', 'play']
+macedon
+['eight', 'pc', 'ubisoft', 'alexander', 'name', 'macedon', 'epirus', 'of', 'epirus', 'c']
+there
+['evidenced', 'chariot', 'burials', 'firmly', 'domestication', 'horses', 'certain', 'thoroughbreds', 'race', 'horses']
+stealing
+['and', 'monastics', 'nonviolence', 'ahimsa', 'satya', 'chastity', 'brahmacharya', 'lay', 'chastity', 'confining']
+to
+['predict', 'utterances', 'accuracy', 'prediction', 'allows', 'judge', 'merits', 'references', 'gair', 'obituary']
+sturdy
+['downhill', 'lesser', 'bicycles', 'all', 'bicycles', 'durable', 'frames', 'wheels', 'gauge', 'tires']
+jesse
+['driver', 'b', 'eight', 'scientist', 'poet', 'owens', 'enid', 'ronald', 'bryan', 'murderer']
+let
+['eusebius', 'constantine', 'records', 'constantine', 'stating', 'then', 'saviour', 'nicaea', 'declare', 'alexandrian']
+editor
+['fads', 'fallacies', 'science', 'dover', 'essays', 'prometheus', 'reprint', 'one', 'six', 'the']
+clients
+['lawyer', 'article', 'lawyer', 'licensed', 'advise', 'courts', 'dispute', 'resolution', 'today', 'require']
+acceptable
+['included', 'displays', 'font', 'situations', 'is', 'obtained', 'alt', 'down', 'eight', 'numeric']
+steam
+['canal', 'systems', 'drawn', 'relied', 'stationary', 'haul', 'wagons', 'back', 'incline', 'steam']
+garner
+['residents', 'rarely', 'neologisms', 'proposed', 'states', 'acceptance', 'like', 'mexican', 'people', 'generation']
+focusing
+['inside', 'japan', 'notably', 'sonic', 'soldier', 'manga', 'asamiya', 'creative', 'consultation', 'stories']
+museum
+['underneath', 'nelson', 'atkins', 'museum', 'kemper', 'toy', 'miniature', 'westport', 'vibrant', 'entertainment']
+antipsychotic
+['types', 'antipsychotics', 'antipsychotics', 'atypical', 'antipsychotics', 'drugs', 'discovered', 'dopamine', 'agonists', 'clinical']
+prosecutions
+['replaces', 'inequality', 'argued', 'hate', 'crime', 'seek', 'punish', 'motive', 'first', 'is']
+rave
+['criminal', 'organising', 'raves', 'longest', 'influential', 'scene', 'named', 'orbital', 'motorway', 'chime']
+chicks
+['round', 'colonies', 'breeding', 'pair', 'burrow', 'at', 'feed', 'hunting', 'squid', 'dive']
+four
+['years', 'year', 'calendar', 'days', 'remaining', 'leuven', 'apparition', 'virgin', 'mary', 'guadalupe']
+frog
+['recognizable', 'muppets', 'primitive', 'henson', 'kermit', 'experimenting', 'way', 'puppetry', 'allow', 'puppeteer']
+success
+['m', 'are', 'favourite', 'snack', 'tes', 'cooking', 'tide', 'seafood', 'traditionally', 'mussels']
+specify
+['decision', 'specific', 'organization', 'has', 'deliberately', 'detail', 'its', 'objectives', 'desired', 'internalized']
+follower
+['mutiny', 'october', 'william', 'moore', 'gunner', 'mutinous', 'sharpening', 'chisel', 'on', 'deck']
+check
+['pound', 'paul', 'ehrlich', 'mailed', 'julian', 'settle', 'wager', 'favor', 'analysis', 'ehrlich']

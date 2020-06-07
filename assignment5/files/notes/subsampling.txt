@@ -1,0 +1,228 @@
+
+loading model...
+architecture: skipgram_ns
+iterations trained: 260000
+model loaded.
+
+Model created with the following parameters:
+loaded model? True
+architecture: skipgram_ns
+no. of dimensions: 300
+window size: 5
+subsampling: True
+learning rate: 1
+iterations trained: 260000
+
+
+
+The top 10 most frequent words:  
+occurrence count:        4205965 
+length of corpus:        16718844
+percentage:              25.157 %
+
+The top 50 most frequent words:  
+occurrence count:        7115992 
+length of corpus:        16718844
+percentage:              42.563 %
+
+The top 100 most frequent words: 
+occurrence count:        7998978 
+length of corpus:        16718844
+percentage:              47.844 %
+
+The top 300 most frequent words: 
+occurrence count:        9477710 
+length of corpus:        16718844
+percentage:              56.689 %
+
+The top 500 most frequent words:
+occurrence count:        10260870
+length of corpus:        16718844
+percentage:              61.373 %
+
+The top 2000 most frequent words: 
+occurrence count:        12677714
+length of corpus:        16718844
+percentage:              75.829 %
+
+The top 3000 most frequent words:
+occurrence count:        13408391
+length of corpus:        16718844
+percentage:              80.199 %
+
+The top 5000 most frequent words:
+occurrence count:        14270070
+length of corpus:        16718844
+percentage:              85.353 %
+
+The top 10000 most frequent words:
+occurrence count:        15268026
+length of corpus:        16718844
+percentage:              91.322 %
+
+total vocabulary size: 71290
+
+
+subsampling... (1e-3)
+original corpus size:    16718844
+reduced corpus size:     11701092
+original vocab size:     71290
+reduced vocab size:      71290
+
+
+The top 10 most frequent words:
+occurrence count:        812202
+length of corpus:        11701092
+percentage:              6.941 %
+
+The top 50 most frequent words:
+occurrence count:        2159687
+length of corpus:        11701092
+percentage:              18.457 %
+
+The top 100 most frequent words:
+occurrence count:        2981226
+length of corpus:        11701092
+percentage:              25.478 %
+
+The top 300 most frequent words:
+occurrence count:        4459958
+length of corpus:        11701092
+percentage:              38.116 %
+
+The top 500 most frequent words:
+occurrence count:        5243118
+length of corpus:        11701092
+percentage:              44.809 %
+
+The top 2000 most frequent words:
+occurrence count:        7659962
+length of corpus:        11701092
+percentage:              65.464 %
+
+The top 3000 most frequent words:
+occurrence count:        8390639
+length of corpus:        11701092
+percentage:              71.708 %
+
+The top 5000 most frequent words:
+occurrence count:        9252318
+length of corpus:        11701092
+percentage:              79.072 %
+
+The top 10000 most frequent words:
+occurrence count:        10250274
+length of corpus:        11701092
+percentage:              87.601 %
+
+total vocabulary size: 71290
+
+
+subsampling... (1e-4)
+original corpus size:    16718844
+reduced corpus size:     8430060
+original vocab size:     71290
+reduced vocab size:      71290
+
+
+The top 10 most frequent words:
+occurrence count:        257255
+length of corpus:        8430060
+percentage:              3.052 %
+
+The top 50 most frequent words:
+occurrence count:        684216
+length of corpus:        8430060
+percentage:              8.116 %
+
+The top 100 most frequent words:
+occurrence count:        954273
+length of corpus:        8430060
+percentage:              11.320 %
+
+The top 300 most frequent words:
+occurrence count:        1651314
+length of corpus:        8430060
+percentage:              19.588 %
+
+The top 500 most frequent words:
+occurrence count:        2161073
+length of corpus:        8430060
+percentage:              25.635 %
+
+The top 2000 most frequent words:
+occurrence count:        4388930
+length of corpus:        8430060
+percentage:              52.063 %
+
+The top 3000 most frequent words:
+occurrence count:        5119607
+length of corpus:        8430060
+percentage:              60.730 %
+
+The top 5000 most frequent words:
+occurrence count:        5981286
+length of corpus:        8430060
+percentage:              70.952 %
+
+The top 10000 most frequent words:
+occurrence count:        6979242
+length of corpus:        8430060
+percentage:              82.790 %
+
+total vocabulary size: 71290
+
+
+subsampling... (1e-5)
+original corpus size:    16718844
+reduced corpus size:     4671420
+original vocab size:     71290
+reduced vocab size:      71290
+
+
+The top 10 most frequent words:
+occurrence count:        81235
+length of corpus:        4671420
+percentage:              1.739 %
+
+The top 50 most frequent words:
+occurrence count:        215361
+length of corpus:        4671420
+percentage:              4.610 %
+
+The top 100 most frequent words:
+occurrence count:        300859
+length of corpus:        4671420
+percentage:              6.440 %
+
+The top 300 most frequent words:
+occurrence count:        521160
+length of corpus:        4671420
+percentage:              11.156 %
+
+The top 500 most frequent words:
+occurrence count:        682476
+length of corpus:        4671420
+percentage:              14.610 %
+
+The top 2000 most frequent words:
+occurrence count:        1449582
+length of corpus:        4671420
+percentage:              31.031 %
+
+The top 3000 most frequent words:
+occurrence count:        1798578
+length of corpus:        4671420
+percentage:              38.502 %
+
+The top 5000 most frequent words:
+occurrence count:        2334728
+length of corpus:        4671420
+percentage:              49.979 %
+
+The top 10000 most frequent words:
+occurrence count:        3220602
+length of corpus:        4671420
+percentage:              68.943 %
+
+total vocabulary size: 71290

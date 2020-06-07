@@ -87,7 +87,7 @@ def n_most_frequent(steps_list):
 
 def main():
     model = self
-    model.train(iteration=400000, output_filename="w2v_analyze_model", debug=True, verbose=False)
+    #model.train(iteration=400000, output_filename="w2v_analyze_model", debug=True, verbose=False)
     print()
 
 
@@ -111,9 +111,9 @@ def main():
     if True:
         #word_list = ["anarchist", "revolution", "although", "william", "diggers", "the", "by", "of", "one", "eight"]
 
-        if False: # 28s for 300 words (incl. model loading)
+        if True: # 28s for 300 words (incl. model loading)
             for i, word in enumerate(model.word2ind.keys()):
-                if i < 4000:
+                if i < 22000:
                     continue
                 w = model.find_similar_fast(word, 5)
                 for pair in w[1:]:
