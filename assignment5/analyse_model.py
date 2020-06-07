@@ -10,8 +10,9 @@ from w2v import Word2Vec
 
 
 model_filename = "./models/w2v_model_skipgram_ns_subsample_lr1 (52K) (proper subsampling)"
+model_filename = "w2v_model_skipgram_ns_subsample_lr1"
 self = Word2Vec(architecture="skipgram", mode="negative_sampling", subsample=True,
-                model_filename="w2v_model_skipgram_ns_subsample_lr1", pickle_filename="w2v_vars_process_corpus",
+                model_filename=model_filename, pickle_filename="w2v_vars_process_corpus",
                 load_model=True, debug=True, learning_rate=1)
 
 '''
@@ -101,7 +102,7 @@ def main():
                     "mouse", "mice", "dollar", "dollars",
                     "work", "works", "speak", "speaks"]
         
-        qn_words = ["defines", "define", "makes", "store"]
+        #qn_words = ["defines", "define", "makes", "store"]
         
         # perform analogical reasoning task
             # find similar words
