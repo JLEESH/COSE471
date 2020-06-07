@@ -1,0 +1,31 @@
+#No learning so far...
+
+
+
+
+loading model...
+architecture: skipgram_ns
+iterations trained: 18000
+model loaded.
+
+Model created with the following parameters:
+loaded model? True
+architecture: skipgram_ns
+no. of dimensions: 300
+window size: 5
+subsampling: True
+learning rate: 0.1
+iterations trained: 18000
+i:       0
+i:       100
+i:       200
+i:       300
+i:       400
+i:       500
+i:       600
+i:       700
+i:       800
+i:       900
+i:       1000
+i:       1100
+i:       1200
