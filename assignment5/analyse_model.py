@@ -10,8 +10,8 @@ from w2v import Word2Vec
 
 
 self = Word2Vec(architecture="skipgram", mode="negative_sampling", subsample=True,
-                model_filename="w2v_model", pickle_filename="w2v_vars_process_corpus",
-                load_model=True, debug=True, learning_rate=1000)
+                model_filename="w2v_model_skipgram_ns_subsample_lr1", pickle_filename="w2v_vars_process_corpus",
+                load_model=True, debug=True, learning_rate=1)
 
 '''
 skipgram_ns(center_index, context_indices)
@@ -49,14 +49,9 @@ def skipgram_ns_modified(center_index, context_indices):
         grad_emb = torch.mv(self.W_out_ns.t(), g)
         grad_out = torch.ger(center_vector, g).t()
 
-        print("emb bef:", self.W_emb.shape(), self.W_emb[:5])
         # update weights
         self.W_emb[center_emb_index] -= self.learning_rate * grad_emb
-        print("emb aft:", self.W_emb.shape(), self.W_emb[:5])
-
-        print("woutns bef:", self.W_out_ns.shape, self.W_out_ns[:5])
         self.W_out_ns -= self.learning_rate * grad_out
-        print("woutns bef:", self.W_out_ns.shape, self.W_out_ns[:5])
 
 
     return loss / len(context_emb_indices)
@@ -66,10 +61,10 @@ self.func = skipgram_ns_modified
 
 def main():
     model = self
-    model.train(iteration=47100, output_filename="w2v_analyze_model", debug=True, verbose=True)
+    #model.train(iteration=49000, output_filename="w2v_analyze_model", debug=True, verbose=True, train_partial=True)
     
     if True:
-        word_list = ["intellectual", "advantage", "betty"]
+        word_list = ["anarchist", "revolution", "although", "william", "diggers", "the", "by", "of", "one", "eight"]
         for word in word_list:
             print(model.find_similar(word, 10))
 

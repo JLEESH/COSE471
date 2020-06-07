@@ -165,10 +165,6 @@ class Word2Vec():
         else:
             self._process_corpus("text8")
 
-        # define the corpus and vocabulary sizes
-        self.corpus_size = len(self.corpus)
-        self.vocabulary_size = len(self.occurrence_dict)
-
 
         # generate some frequency/distribution dictionaries
         self._generate_dist_dicts()
@@ -279,6 +275,16 @@ class Word2Vec():
             self.word2ind = pickle.load(f)
             self.ind2word = pickle.load(f)
 
+            # define the corpus and vocabulary sizes
+            self.corpus_size = len(self.corpus)
+            self.vocabulary_size = len(self.occurrence_dict)
+
+            if self.subsample:
+                self.original_corpus = self.corpus.copy()
+                self.original_corpus_size = self.corpus_size
+                self.original_occurrence_dict = self.occurrence_dict.copy()
+                self.original_vocabulary_size = self.vocabulary_size
+
 
 
     '''
@@ -305,6 +311,11 @@ class Word2Vec():
     Other related variables retain their values.
     '''
     def subsample_corpus(self, threshold):
+        # reset corpus
+        self.corpus = self.original_corpus
+        self.corpus_size = self.original_corpus_size
+        self.occurrence_dict = self.original_occurrence_dict
+        self._generate_dist_dicts()
 
         # initiate discard_probability
         discard_probability = {}
@@ -320,7 +331,6 @@ class Word2Vec():
         new_corpus_count = Counter(new_corpus)
 
         if self.debug and False:
-
             # output debug information
             debug_word_list = ["of", "the", "lucky", "help", self.ind2word[10], self.ind2word[100], self.ind2word[1000], self.ind2word[10000]]
             print("subsampled corpus size:\t", len(new_corpus))
@@ -335,6 +345,12 @@ class Word2Vec():
         self.corpus_size = len(new_corpus)
         self.occurrence_dict = new_corpus_count
         self._generate_dist_dicts()
+
+        if self.debug:
+            print("original corpus size:\t", self.original_corpus_size)
+            print("reduced corpus size:\t", self.corpus_size)
+            print("original vocab size:\t", self.original_vocabulary_size)
+            print("reduced vocab size:\t", len(new_corpus_count))
 
 
 
@@ -530,7 +546,7 @@ class Word2Vec():
             self.weight_save_iteration = self.progress_check_iteration * 10
 
         # define one "epoch" to be 5 weight saving iterations
-        self.epoch_iteration = self.weight_save_iteration * 5
+        self.epoch_iteration = self.weight_save_iteration * 10
 
         # perform subsampling
         if self.subsample:
@@ -557,7 +573,7 @@ class Word2Vec():
 
             # check if the user wants to train on a partial corpus
             if train_partial:
-                center_index = center_index % 1000
+                center_index = center_index % 10000
 
             # obtain context_indices
             context_indices = self.getContextIndices(center_index)
@@ -900,7 +916,7 @@ def main():
 
 
     model = Word2Vec("skipgram", mode="negative_sampling", learning_rate=learning_rate, load_model=load_model, 
-                    model_filename="w2v_model_default", pickle_filename=pickle_filename,
+                    model_filename="w2v_model_skipgram_ns_subsample_lr1", pickle_filename=pickle_filename,
                     max_context_dist=5, debug=debug, subsample=subsample)
 
 
@@ -909,10 +925,10 @@ def main():
         print()
         print("commencing training...")
         if inf_train:
-            model.train(-1, output_filename="w2v_model_default",
+            model.train(-1, output_filename="w2v_model_skipgram_ns_subsample_lr1",
                         debug=debug, verbose=verbose, train_partial=train_partial)
         else:
-            model.train(iterations, output_filename="w2v_model_default",
+            model.train(iterations, output_filename="w2v_model_skipgram_ns_subsample_lr1",
                         debug=debug, verbose=verbose, train_partial=train_partial)
             # notify user when training ends
             import winsound
@@ -965,7 +981,7 @@ def main():
 
     if debug:
         # debug: find words similar to a certain set of words
-        for i in range(300, 500):
+        for i in range(30, 50):
 
             # select words by frequency or by position in corpus
             word = model.ind2word[i]
