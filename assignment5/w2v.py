@@ -8,6 +8,7 @@ import argparse
 import pickle
 
 
+
 '''
 process_text(filename, pickle_filename)
 
@@ -95,11 +96,6 @@ def process_text(filename, pickle_filename):
 
 
 
-# TODO: implement hierarchical softmax and negative sampling
-# TODO: implement subsampling and support other affected operations (saving, loading etc.)
-
-
-
 class Word2Vec():
 
     '''
@@ -107,6 +103,7 @@ class Word2Vec():
                 dimension=300, max_context_dist=4, learning_rate=1e-3,
                 pickle_filename=None, load_model=False, model_filename=None,
                 debug=False)
+
 
     Creates a word2vec model with the given parameters.
 
@@ -157,6 +154,7 @@ class Word2Vec():
         self.dimension = dimension
         self.subsample = subsample
         self.debug = debug
+        self.subsampling_threshold = 0.00001
 
 
         # load preprocessed corpus and relevant dictionaries
@@ -193,6 +191,7 @@ class Word2Vec():
 
     '''
     _init_model():
+
 
     Internal method to initiate a model.
     '''
@@ -304,6 +303,7 @@ class Word2Vec():
     '''
     subsample_corpus()
 
+
     Subsamples the corpus.
 
     WARNING: only self.corpus, self.corpus_size, self.occurrence_dict, self.frequency_dict
@@ -357,6 +357,7 @@ class Word2Vec():
     '''
     generate_dist_dicts()
 
+
     Interal method to generate distribution dictionaries.
     '''
     def _generate_dist_dicts(self):
@@ -402,6 +403,7 @@ class Word2Vec():
 
     '''
     get_ns_indices()
+
 
     Generates indices for negative sampling.
     Returns a list of integers.
@@ -454,7 +456,6 @@ class Word2Vec():
     Finds a number of words that are the most similar to a given word.
     '''
     def find_similar(self, word, n_output=5):
-        # TODO: use Pytorch cosine similarity instead
 
         # obtain lengths of embedding vectors
 
@@ -487,14 +488,17 @@ class Word2Vec():
 
 
     Finds a number of words that are the most similar to a given word.
+    Uses the cosine similarity implementation from Pytorch instead.
     '''
     def find_similar_fast(self, word, n_output=5):
         
+        # extract word embedding
         word_emb = self.W_emb[self.word2ind[word]]
-        #sim_list= []
-        #for _, embedding in enumerate(self.W_emb):
+
+        # find similarity values
         sim = F.cosine_similarity(word_emb, self.W_emb, -1)
         
+        # obtain the similarity values and indices of the most similar words
         values, indices = sim.topk(n_output)
 
         # generate word_list
@@ -502,7 +506,6 @@ class Word2Vec():
         for index, value in zip(indices, values):
             word_list.append((self.ind2word[index.item()], value.item()))
 
-        # set breakpoint here to take a look at word_list and other local variables
         return word_list
 
 
@@ -570,13 +573,13 @@ class Word2Vec():
             self.progress_check_iteration = 1000
             self.weight_save_iteration = self.progress_check_iteration * 10
 
-        # define one "epoch" to be 5 weight saving iterations
+        # define one "epoch" to be 10 weight saving iterations
         self.epoch_iteration = self.weight_save_iteration * 10
 
         # perform subsampling
         if self.subsample:
             print("subsampling corpus...")
-            self.subsample_corpus(0.00001) # change threshold as necessary
+            self.subsample_corpus(self.subsampling_threshold) # change threshold as necessary
             print("subsampling complete.")
             print()
 
@@ -632,9 +635,10 @@ class Word2Vec():
             if self.subsample:
                 if i % self.epoch_iteration == 0:
                     print("subsampling corpus...")
-                    self.subsample_corpus(0.00001) # change threshold as necessary
+                    self.subsample_corpus(self.subsampling_threshold)
                     print("subsampling complete.")
                     print()
+            # note: subsamples at the end of training... however that might be used
 
         # save weights to file after training is complete
         self.trained_iterations = i
@@ -918,6 +922,7 @@ def main():
                 "work", "works", "speak", "speaks"]
 
     # define some "easier" test questions with more common words
+    # note: subsampling makes these questions "less easy"
     qn_words_test = ["is", "was", "has", "had",
                      "is", "are", "has", "have",
                      "is", "was", "are", "were",
@@ -935,17 +940,21 @@ def main():
     else:
         pickle_filename = None
     
-    # Note: comment away the line below when the pickle file does not already exist
-    # (i.e. make the previous few lines actually do something)
-    pickle_filename = "w2v_vars_process_corpus"
+    # note: comment away the line below when the pickle file does not already exist
+    #       alternatively, uncomment the line below when the pickle file exists
+    #       (i.e. make the previous few lines actually do something)
+    #pickle_filename = "w2v_vars_process_corpus"
 
 
+    # skipgram with negative sampling (N=15, C=5)
+    # skipgram generally performs better for analogical reasoning tasks, hence it was selected
+    # note: change model_filename and output_filename as appropriate
     model = Word2Vec("skipgram", mode="negative_sampling", learning_rate=learning_rate, load_model=load_model, 
                     model_filename="w2v_model_skipgram_ns_subsample_lr1", pickle_filename=pickle_filename,
                     max_context_dist=5, debug=debug, subsample=subsample)
 
 
-    # train model (takes a long time)
+    # train model (takes a *really* long time)
     if perform_training:
         print()
         print("commencing training...")
@@ -1001,7 +1010,6 @@ def main():
     ###### DEBUG #####
 
     The following section produces output for debugging.
-    TODO: use commandline arguments to streamline the debugging process?
     '''
 
     if debug:
@@ -1081,20 +1089,6 @@ def main():
         plt.figure()
         plt.plot(x, y)
         plt.show()
-
-
-
-
-    # take a look at the word embeddings
-    if debug and False:
-        for i in range(20):
-            print(model.ind2word[i], "\t:\t", model.W_emb[i, :5])
-
-
-    # misc. debug
-    if debug and False:
-        print("learning rate:", learning_rate)
-
 
 
 if __name__ == '__main__':
