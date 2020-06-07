@@ -483,6 +483,31 @@ class Word2Vec():
 
 
     '''
+    find_similar_fast(word, n_output=5)
+
+
+    Finds a number of words that are the most similar to a given word.
+    '''
+    def find_similar_fast(self, word, n_output=5):
+        
+        word_emb = self.W_emb[self.word2ind[word]]
+        #sim_list= []
+        #for _, embedding in enumerate(self.W_emb):
+        sim = F.cosine_similarity(word_emb, self.W_emb, -1)
+        
+        values, indices = sim.topk(n_output)
+
+        # generate word_list
+        word_list = []
+        for index, value in zip(indices, values):
+            word_list.append((self.ind2word[index.item()], value.item()))
+
+        # set breakpoint here to take a look at word_list and other local variables
+        return word_list
+
+
+
+    '''
     deduce(word_original, word_root, word_question)
 
 
@@ -939,7 +964,7 @@ def main():
     if perform_task:
         # find similar words
         for word in qn_words:
-            word_list = model.find_similar(word, 5)
+            word_list = model.find_similar_fast(word, 5)
             print("words most similar to:", word)
             print(word_list)
             print()
@@ -988,7 +1013,7 @@ def main():
             #word = model.corpus[i]
 
             # note: word_list contains tuples
-            word_list = model.find_similar(word, 5)
+            word_list = model.find_similar_fast(word, 5)
             print("words most similar to:", word)
             print(word_list)
             print()
@@ -1056,7 +1081,6 @@ def main():
         plt.figure()
         plt.plot(x, y)
         plt.show()
-
 
 
 

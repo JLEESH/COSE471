@@ -9,6 +9,7 @@ import pickle
 from w2v import Word2Vec
 
 
+model_filename = "./models/w2v_model_skipgram_ns_subsample_lr1 (52K) (proper subsampling)"
 self = Word2Vec(architecture="skipgram", mode="negative_sampling", subsample=True,
                 model_filename="w2v_model_skipgram_ns_subsample_lr1", pickle_filename="w2v_vars_process_corpus",
                 load_model=True, debug=True, learning_rate=1)
@@ -64,10 +65,72 @@ def main():
     #model.train(iteration=49000, output_filename="w2v_analyze_model", debug=True, verbose=True, train_partial=True)
     
     if True:
-        word_list = ["anarchist", "revolution", "although", "william", "diggers", "the", "by", "of", "one", "eight"]
-        for word in word_list:
-            print(model.find_similar(word, 10))
+        #word_list = ["anarchist", "revolution", "although", "william", "diggers", "the", "by", "of", "one", "eight"]
 
+        if True: # 28s for 300 words (incl. model loading)
+            for i, word in enumerate(model.word2ind.keys()):
+                w = model.find_similar_fast(word, 5)
+                for pair in w[1:]:
+                    if pair[1] > 0.4:
+                        print(w)
+                        break
+                if i % 100 == 0:
+                    print("i:\t", i)
+        
+        if False: # 45s for 300 words (incl. model loading)
+            for i, word in enumerate(model.word2ind.keys()):
+                w = model.find_similar(word, 5)
+                for pair in w[1:]:
+                    if pair[1] > 0.4:
+                        print(w)
+                        break
+                if i == 300:
+                    print("i:\t", i)
+                    break
+
+    
+    if False:
+        # define question words
+        qn_words = ["brother", "sister", "grandson", "granddaughter",
+                    "apparent", "apparently", "rapid", "rapidly",
+                    "possibly", "impossibly", "ethical", "unethical",
+                    "great", "greater", "tough", "tougher",
+                    "easy", "easiest", "lucky", "luckiest",
+                    "think", "thinking", "read", "reading",
+                    "walking", "walked", "swimming", "swam",
+                    "mouse", "mice", "dollar", "dollars",
+                    "work", "works", "speak", "speaks"]
+        
+        qn_words = ["defines", "define", "makes", "store"]
+        
+        # perform analogical reasoning task
+            # find similar words
+        for word in qn_words:
+            word_list = model.find_similar_fast(word, 5)
+            for word in word_list[1:]:
+                if word[1] > 0.4:
+                    print("words most similar to:", word)
+                    print(word_list)
+                    print()
+        print()
+        for i in range(0, 1):
+            answer = model.deduce(qn_words[i * 4], qn_words[i * 4 + 1], qn_words[i * 4 + 3])
+            print("question:", qn_words[i * 4], "-", qn_words[i * 4 + 1], "+", qn_words[i * 4 + 3])
+            print("answer:", answer)  # TODO: better format for output
+            print()
+            #answer = model.deduce(qn_words[i * 4 + 1], qn_words[i * 4], qn_words[i * 4 + 2])
+            #print("question:", qn_words[i * 4 + 1], "-", qn_words[i * 4], "+", qn_words[i * 4 + 2])
+            #print("answer:", answer)  # TODO: better format for output
+            #print()
+            #answer = model.deduce(qn_words[i * 4 + 2], qn_words[i * 4 + 3], qn_words[i * 4 + 1])
+            #print("question:", qn_words[i * 4 + 2], "-", qn_words[i * 4 + 3], "+", qn_words[i * 4 + 1])
+            #print("answer:", answer)  # TODO: better format for output
+            #print()
+            #answer = model.deduce(qn_words[i * 4 + 3], qn_words[i * 4 + 2], qn_words[i * 4])
+            #print("question:", qn_words[i * 4 + 3], "-", qn_words[i * 4 + 2], "+", qn_words[i * 4])
+            #print("answer:", answer)  # TODO: better format for output
+            #print()
+        print()
 
 if __name__ == "__main__":
     main()
